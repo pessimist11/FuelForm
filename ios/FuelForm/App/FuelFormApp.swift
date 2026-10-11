@@ -10,7 +10,8 @@ import SwiftData
             let schema = Schema(versionedSchema: FuelSchemaV1.self)
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: .none)
             let c = try ModelContainer(for: schema, migrationPlan: FuelMigrations.self, configurations: [config])
-            container = c; store = try AppStore(container: c); failure = nil
+            let loadedStore = try AppStore(container: c)
+            container = c; store = loadedStore; failure = nil
         } catch { container = nil; store = nil; failure = error.localizedDescription }
     }
     var body: some Scene {

@@ -2,7 +2,7 @@
 
 个人 iPhone 饮食与训练记录 App，Swift / SwiftUI / SwiftData，最低 iOS 17。四个入口：今日、饮食、训练、我的。个人历史只存手机，后端只做食物分析与计划草稿。
 
-**当前交付：原生工程、功能源码、可运行后端及核心规则验证。当前 Mac 没有完整 Xcode、iOS SDK 或模拟器，尚未完成 iOS 编译、界面验收、SwiftData 重启测试或真机安装。真实 AI 未调用。** 详见 [进度与证据](docs/progress.md) 和 [验收清单](docs/acceptance.md)。
+**当前状态：已使用 Xcode 27.0 / iOS 27.0 完成 Debug、Release 模拟器构建，22 项原生 XCTest 全部通过。已通过界面验证目标保存、手动餐次草稿/确认/修改、热量汇总、一周计划/休息日、实际训练记录与 App 重启后的数据保留。首页可直接设置目标、查看草稿和管理计划。相册/AI、完整界面与辅助功能、iPhone 真机安装仍待验收。** 详见 [进度与证据](docs/progress.md) 和 [验收清单](docs/acceptance.md)。
 
 ## 当前版本
 
@@ -54,7 +54,7 @@ AI_TIMEOUT_SECONDS=45
 
 已生成 `ios/FuelForm.xcodeproj`、共享FuelForm scheme、App/XCTest targets、资源和两种Info.plist。无第三方iOS依赖。无需XcodeGen。
 
-1. 安装兼容当前macOS且包含iOS 17+ SDK的**完整Xcode**及一个iPhone模拟器运行时。当前仅CLT，不能编译iOS。
+1. 安装兼容当前macOS且包含iOS 17+ SDK的**完整Xcode**及一个iPhone模拟器运行时。本工作区所在 Mac 已安装 Xcode 27.0 和 iOS 27.0；其他机器仍需安装这些组件。
 2. 必要时切换工具目录并在Xcode中完成首次启动设置：
 
 ```sh
@@ -65,7 +65,7 @@ open ios/FuelForm.xcodeproj
 ```
 
 3. 选择FuelForm scheme和可用iPhone模拟器，Run。先测试离线手动流程；再在服务配置填 `http://localhost:8000` 和SERVICE_TOKEN，保存凭据后做Mock分析。模拟器相机不可用时有说明，可从相册选择。
-4. Cmd-U 执行核心与SwiftData持久化测试，按 [验收清单](docs/acceptance.md) 走UI。上面Xcode/模拟器命令是后续操作说明，**本次没有成功执行**。
+4. Cmd-U 执行核心、SwiftData与Keychain测试，按 [验收清单](docs/acceptance.md) 走UI。本次已通过 `xcodebuild test` 执行22项测试；实际Xcode/SDK版本和剩余UI项目见进度文档。
 
 可重复生成工程：
 
@@ -76,6 +76,8 @@ python3 scripts/generate_xcode.py --bundle-id <自己的BundleID> --team-id <自
 ```
 
 生成器会覆盖pbxproj、scheme和Info.plist；新增源码/测试后重跑。不要不带参数重新覆盖你手工配置的签名。默认Bundle ID `personal.FuelForm` 仅为本地开发占位，请为真机选择自己的唯一ID。
+
+模拟器构建使用专用 `FuelForm-Simulator.entitlements`，只给本 App 的私有 Keychain 身份；真机构建由真实 Team/Provisioning Profile提供身份。请保持默认模拟器签名设置，不用 `CODE_SIGNING_ALLOWED=NO` 运行需要Keychain的验收。参见 [Apple访问组说明](https://developer.apple.com/documentation/Security/sharing-access-to-keychain-items-among-a-collection-of-apps)。
 
 ## 安装到自己的 iPhone
 
@@ -100,12 +102,12 @@ scutil --get LocalHostName
 
 运行工程/资源/传输配置/Swift语法结构检查、后端pytest、Foundation Swift业务与契约检查。当前实际通过后端33项、Swift19项（含实际HTTP产生的响应样本解码）。这个命令**不运行iOS模拟器**。CLT缺少XCTest，Swift检查采用自带断言可执行入口；相同案例在Xcode中由XCTest执行。
 
-有完整Xcode后，以下构建与测试入口待执行，设备ID从实际simctl输出选择：
+以下原生构建/测试入口已经在 Xcode 27 上执行通过，设备ID从你实际的simctl输出选择：
 
 ```sh
-xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
-xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Debug -destination 'id=<实际模拟器UDID>' CODE_SIGNING_ALLOWED=NO test
-xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build
+xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Debug -destination 'id=<实际模拟器UDID>' test
+xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build
 ```
 
 ## 实际使用的环境
@@ -119,10 +121,10 @@ xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Relea
 | Uvicorn / OpenAI SDK | 0.54.0 / 3.28.0 |
 | Pillow / pillow-heif | 12.3.0 / 1.8.1 |
 | pytest | 9.1.1 |
-| Xcode / iOS SDK / simulator | 无；当前developer路径为CommandLineTools |
+| Xcode / iOS SDK / simulator | Xcode 27.0（27A266a）、iOS 27.0、iPhone 18 Pro（模拟器） |
 
 直接依赖在 `backend/requirements.txt`，完整已安装版本在 `backend/requirements.lock`；含SOCKS代理需要的socksio。`.gitignore` 排除凭据、构建产物、个人数据与照片。项目从空工作区开始开发，源码仓库为 [pessimist11/FuelForm](https://github.com/pessimist11/FuelForm)，默认分支为 `main`。
 
 ## 后续优先级
 
-先在完整Xcode构建并修复SDK层问题，完成模拟器/真机验收；再用真实照片核对AI与人工值。之后优先完整照片备份/恢复和迁移演练，再扩充有来源的本地食物库。详见 [产品范围](docs/product.md)、[数据模型](docs/data-model.md)、[营养来源](docs/nutrition.md)。
+继续完成模拟器完整流程和真机验收；再用真实照片核对AI与人工值。之后优先完整照片备份/恢复和迁移演练，再扩充有来源的本地食物库。详见 [产品范围](docs/product.md)、[数据模型](docs/data-model.md)、[营养来源](docs/nutrition.md)。

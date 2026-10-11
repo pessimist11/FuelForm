@@ -9,7 +9,8 @@
 - 后端：`backend/.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-access-log`。
 - `.env` 的生成：`python3 scripts/bootstrap_backend.py`，不输出凭据，不覆盖已有文件。
 - 环境允许的验证：`./scripts/verify.sh`。`scripts/smoke_backend.py` 对运行中的 Mock 服务做实际 HTTP 验证。
-- XCTest 的持久化测试需完整 Xcode / iOS 模拟器；见 `docs/acceptance.md`。缺少 SDK 时不能声称 App 编译或真机通过。
+- XCTest 的持久化测试需完整 Xcode / iOS 模拟器；见 `docs/acceptance.md`。缺少 SDK 时不能声称 App 编译或真机通过。当前已在Xcode27/iOS27完成Debug/Release构建和22项XCTest，已验收手动记餐/目标/训练及App重启；照片/AI、完整UI/真机仍待。
+- 模拟器使用SDK条件化的私有Keychain entitlement；真机沿用真实Team，不禁用签名来跑Keychain验收。Keychain测试必须用隔离账号，不能覆盖用户token。
 
 ## 数据规则
 

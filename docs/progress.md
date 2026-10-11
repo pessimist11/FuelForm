@@ -2,7 +2,7 @@
 
 日期：2026-10-11（Asia/Shanghai）。本次在空工作区从零实现，原生路线未改变。
 
-## 环境
+## 首次实现时的环境（下方追加原生验证进展）
 
 - 当前 `xcode-select -p` 为 `/Library/Developer/CommandLineTools`。
 - `xcodebuild -version` 失败：requires Xcode；`xcrun --sdk iphoneos --show-sdk-version` 找不到iOS SDK；`xcrun simctl` 无工具。/Applications中没有Xcode。
@@ -49,3 +49,48 @@
 - 真正旧版本的迁移、照片完整备份/恢复。
 
 后续需要：完整Xcode及模拟器；自己的Apple Account与iPhone设备操作；若使用真实AI，在后端私下填写API Key及可访问模型。不要把凭据发进聊天。具体步骤与判断标准见README和acceptance.md。
+
+## 2026-10-11 追加：Xcode 原生验证
+
+用户安装完整Xcode后，已通过界面打开工程，选用FuelForm scheme / iPhone 18 Pro；当前developer目录为 `/Applications/Xcode.app/Contents/Developer`。实际版本：Xcode27.0（27A266a）、Swift6.4、iOS27.0；模拟器ID `1948D3AD-24BE-442F-A75E-BF0C4E274B9B`。
+
+- 首次原生构建发现FuelFormApp.init在抛错前已给不可变container赋值，catch又赋值。改为先完整加载AppStore，再一次性初始化属性；保留失败时不清空存储的行为。
+- Debug/Release模拟器构建均 **BUILD SUCCEEDED**；22项原生XCTest **TEST SUCCEEDED**，其中19项领域/契约、2项SwiftData磁盘/照片引用、1项Keychain。
+- 实际通过Xcode Run启动App，Device Hub中看到FuelForm今日页：没有确认记录、目标与消耗未知、四个入口、记一餐和训练空状态。
+- 进入“我的”时发现Keychain -34018；检查显示原模拟器App缺少私有访问身份。新增SDK条件化的Simulator entitlement，采用AppIdentifierPrefix + BundleID，只允许自己的Keychain组；真机仍由用户真实Team注入，未填造假的生产Team。
+- 新增Keychain回归案例使用UUID命名的隔离账号与合成字符串，验证读/写/更新/删除，不读取或覆盖用户服务令牌；正常模拟器签名下通过。
+- XcodeGUI旧调试会话曾卡在重复运行状态；正常退出、重新打开项目后恢复Run。Device Hub自动化导航/读取出现noWindowsAvailable、timeout等错误，已看到首页但**没有确认完整的手动记餐/训练/资料页UI流程通过**，保留验收待办。
+
+实际命令（不禁用模拟器签名）：
+
+```sh
+xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Debug -destination 'id=1948D3AD-24BE-442F-A75E-BF0C4E274B9B' -derivedDataPath /private/tmp/FuelFormDerivedData -resultBundlePath /private/tmp/FuelForm-native-tests-2.xcresult test
+xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /private/tmp/FuelFormDerivedData build
+```
+
+本机临时证据：`/private/tmp/FuelForm-native-tests-2.log`、同名xcresult，以及 `/private/tmp/FuelForm-release-build-2.log`；不含真实模型调用。最初21项测试未覆盖Keychain，修复后22项通过。原先“缺Xcode、iOS编译/SwiftData集成未验证”的历史限制已由这些结果部分解除；iOS17运行时、全UI流程、实际App重启、真实AI与iPhone仍未验证。变更目前保存在本地，尚未提交推送本次修复。
+
+## 2026-10-12 追加：手动流程与实际 App 重启验收
+
+在同一iPhone 18 Pro / iOS27模拟器通过Device Hub界面执行以下操作，使用标记为验收/QA的合成记录，不填写真实身体资料，不调用AI服务。
+
+- 首页补上目标设置/调整、查看记录与草稿、建立/管理训练计划入口。保留四个底部标签页；空状态现在可以直接采取下一步操作。
+- 「我的」正常打开，没有此前的Keychain -34018弹窗。保存临时目标1800/消耗2200，首页显示对应快照；此前11日的目标与消耗仍为空。
+- 11日23:58录入300 kcal整餐草稿。午夜后首页自动显示12日，草稿仍属于11日；饮食历史显示草稿未计入。重新打开并确认后，11日显示300 kcal，12日不受影响。
+- 12日录入并确认400 kcal：摄入400、剩余1400、估算缺口1800。编辑同一餐次为600后：摄入600、剩余1200、估算缺口1600；列表保持一条当天记录。
+- 建立七天QA手动计划，今天徒手深蹲1组，其余休息日。开始后填写实际10次、勾选该组完成、动作标为完成并结束；界面显示已保存和结束时间。切到明天显示休息日，无完成任务。
+- 使用Xcode Stop终止实际App进程，再Run启动：餐次600、目标1800/2200，以及训练的10次、完成状态、结束时间均保留；首页继续入口打开已有日志，不创建新日志。
+- 收尾通过资料界面清空临时目标/消耗，并明确更新今日快照；首页恢复目标与消耗未知。停用QA计划后，当日无安排，已完成训练历史仍在。保留有验收/QA标记的餐次和历史，不将其打包到源码或Git。
+
+最终代码的实际验证：
+
+```sh
+xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Debug -destination 'id=1948D3AD-24BE-442F-A75E-BF0C4E274B9B' -derivedDataPath /private/tmp/FuelFormDerivedData -resultBundlePath /private/tmp/FuelForm-final-tests-20261012.xcresult test
+xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /private/tmp/FuelFormDerivedData build
+```
+
+结果：22项XCTest、0失败、TEST SUCCEEDED；Release BUILD SUCCEEDED；工程引用/配置/Swift语法检查和git diff --check通过。证据位于 `/private/tmp/FuelForm-final-tests-20261012.log`、同名xcresult及 `/private/tmp/FuelForm-final-release-20261012.log`。XcodeGUI最终Run也成功。
+
+Device Hub的坐标点击持续报noWindowsAvailable，部分AX字段/Stepper在值变化后需要完整刷新，模拟器粘贴有异步剪贴板问题。改用界面可访问性按钮、直接键入数字/ASCII标记和系统返回快捷键完成以上流程；没有换用未授权的UI控制方式。首页入口让实际首次使用步骤也更直接。本次不把底部标签栏触摸、照片、删除、负数、大字号/深色/VoiceOver或全流程称为已通过。
+
+当前devicectl设备列表只检测到iPhone 18 Pro模拟器（hardwareProperties.reality=simulated，transportType=sameMachine），未检测到真机。工程未配置个人Team；真机连接、账户与签名、照片/权限/网络及真实AI仍待完成。代码修复和验收文档将正常提交并推送现有main；推送结果以Git远端核验为准。

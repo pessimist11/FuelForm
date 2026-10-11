@@ -32,6 +32,7 @@ for p in sorted((root/'Tests').rglob('*.swift')):
 for name in ['foods.v1.json','exercises.v1.json']: file(Path('FuelForm/Resources')/name, 'text.json', resources)
 file(Path('FuelForm/Resources/Assets.xcassets'), 'folder.assetcatalog', resources)
 for name in ['Info-Debug.plist','Info-Release.plist']: file(Path('FuelForm')/name, 'text.plist.xml', None)
+file(Path('FuelForm/FuelForm-Simulator.entitlements'), 'text.plist.entitlements', None)
 for p in sorted((root/'Tests/Fixtures').glob('*.json')): file(p.relative_to(root), 'text.json', test_resources)
 products = add('products','{isa = PBXGroup; children = '+refs([app_product,test_product])+'; name = Products; sourceTree = "<group>";}')
 group = add('group','{isa = PBXGroup; children = '+refs(files+[products])+'; sourceTree = "<group>";}')
@@ -41,12 +42,15 @@ test_phases=[phase('testSources','PBXSourcesBuildPhase',test_sources),phase('tes
 def configlist(name, settings):
     ids=[]
     for config,values in settings.items():
-        serialized=' '.join(k+' = '+quote(str(v))+';' for k,v in values.items())
+        serialized=' '.join(quote(k)+' = '+quote(str(v))+';' for k,v in values.items())
         ids.append(add(name+config,'{isa = XCBuildConfiguration; name = '+config+'; buildSettings = {'+serialized+'};}'))
     return add(name+'list','{isa = XCConfigurationList; buildConfigurations = '+refs(ids)+'; defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;}')
 base={'IPHONEOS_DEPLOYMENT_TARGET':'17.0','SDKROOT':'iphoneos','SWIFT_VERSION':'5.0','CLANG_ENABLE_MODULES':'YES','ENABLE_TESTABILITY':'YES'}
 pconfigs=configlist('projectConfig',{'Debug':dict(base,SWIFT_OPTIMIZATION_LEVEL='-Onone',SWIFT_ACTIVE_COMPILATION_CONDITIONS='DEBUG'), 'Release':dict(base,SWIFT_OPTIMIZATION_LEVEL='-O',ENABLE_TESTABILITY='NO')})
 common={'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':args.bundle_id,'CODE_SIGN_STYLE':'Automatic','TARGETED_DEVICE_FAMILY':'1','SUPPORTED_PLATFORMS':'iphoneos iphonesimulator','ASSETCATALOG_COMPILER_APPICON_NAME':'AppIcon','ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME':'AccentColor','GENERATE_INFOPLIST_FILE':'NO','MARKETING_VERSION':'1.0','CURRENT_PROJECT_VERSION':'1','SWIFT_EMIT_LOC_STRINGS':'YES'}
+# Simulator has no provisioning profile to inject the app's private Keychain identity.
+# Device builds continue to get their identifier from the user's real signing team.
+common['CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]']='FuelForm/FuelForm-Simulator.entitlements'
 if args.team_id: common['DEVELOPMENT_TEAM']=args.team_id
 aconfigs=configlist('appConfig', {c:dict(common,INFOPLIST_FILE=f'FuelForm/Info-{c}.plist') for c in ['Debug','Release']})
 tconfigs=configlist('testConfig', {c:{'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':args.bundle_id+'.tests','GENERATE_INFOPLIST_FILE':'YES','CODE_SIGN_STYLE':'Automatic','TARGETED_DEVICE_FAMILY':'1','TEST_HOST':'$(BUILT_PRODUCTS_DIR)/FuelForm.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FuelForm','BUNDLE_LOADER':'$(TEST_HOST)'} for c in ['Debug','Release']})

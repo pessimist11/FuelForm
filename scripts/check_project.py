@@ -21,6 +21,13 @@ for v in objects.values():
  for key in ('children','files','buildPhases','buildConfigurations','targets','dependencies'):
   if key in v: assert all(x in objects for x in v[key])
 assert len([v for v in objects.values() if v['isa']=='PBXNativeTarget'])==2
+sim_entitlements=plistlib.loads((root/'ios/FuelForm/FuelForm-Simulator.entitlements').read_bytes())
+assert sim_entitlements == {
+ 'application-identifier':'$(AppIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)',
+ 'keychain-access-groups':['$(AppIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)']
+}
+app_configs=[v['buildSettings'] for v in objects.values() if v['isa']=='XCBuildConfiguration' and v.get('buildSettings',{}).get('PRODUCT_NAME')=='$(TARGET_NAME)' and 'ASSETCATALOG_COMPILER_APPICON_NAME' in v.get('buildSettings',{})]
+assert all(c.get('CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]')=='FuelForm/FuelForm-Simulator.entitlements' and 'CODE_SIGN_ENTITLEMENTS' not in c for c in app_configs)
 for config in ('Debug','Release'):
  data=plistlib.loads((root/f'ios/FuelForm/Info-{config}.plist').read_bytes())
  assert 'NSCameraUsageDescription' in data and 'NSLocalNetworkUsageDescription' in data

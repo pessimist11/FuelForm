@@ -40,3 +40,7 @@ FastAPI 通过 Provider 协议调用 MockProvider 或 OpenAIProvider。`PROVIDER
 ## 开发网络
 
 Debug Info.plist 只有 `NSAllowsLocalNetworking`，APIClient 只允许 http://localhost、127.0.0.1 或 `.local` 主机。Release 没有 ATS 例外且只接受 HTTPS。没有全局 `NSAllowsArbitraryLoads`。真机不能使用 localhost 连 Mac，使用同 Wi-Fi Mac 的 `.local` 主机名；HTTPS 可使用 IP/域名及系统信任证书。iOS 的本地网络权限拒绝时请求报错，手动功能不受影响。
+
+## Xcode 27 模拟器签名
+
+原生验证发现无私有身份的模拟器App会返回Keychain -34018。工程仅在iphonesimulator SDK配置 `FuelForm-Simulator.entitlements`，使用 `$(AppIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)` 作为私有身份与唯一访问组；iphoneos不使用该文件，由真实签名Team/Provisioning Profile注入。没有扩大到其他App的Keychain组。采用正常签名后，隔离Keychain测试通过；[Apple访问组与AppID说明](https://developer.apple.com/documentation/Security/sharing-access-to-keychain-items-among-a-collection-of-apps)。
