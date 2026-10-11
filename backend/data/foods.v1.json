@@ -1,0 +1,168 @@
+{
+  "version": "fuelform-foods-1.0.0",
+  "sourceArchive": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip",
+  "archiveSHA256": "b80817294b8850530aaedf2e515c02593b1824f763a0ff356e5c2081643e6fd0",
+  "foods": [
+    {
+      "id": "rice-cooked",
+      "name": "熟白米饭",
+      "preparation": "熟重，水煮，无额外油",
+      "aliases": [
+        "白米饭",
+        "米饭"
+      ],
+      "nutrients": {
+        "kcal": 130.0,
+        "protein": 2.69,
+        "carbs": 28.17,
+        "fat": 0.28
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Rice, white, long-grain, regular, enriched, cooked",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/168878/nutrients"
+      }
+    },
+    {
+      "id": "rice-raw",
+      "name": "生白米",
+      "preparation": "生重，未烹饪",
+      "aliases": [
+        "生米"
+      ],
+      "nutrients": {
+        "kcal": 365.0,
+        "protein": 7.13,
+        "carbs": 79.95,
+        "fat": 0.66
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Rice, white, long-grain, regular, raw, enriched",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/168877/nutrients"
+      }
+    },
+    {
+      "id": "banana",
+      "name": "香蕉",
+      "preparation": "生重，可食部分",
+      "aliases": [
+        "香蕉"
+      ],
+      "nutrients": {
+        "kcal": 89.0,
+        "protein": 1.09,
+        "carbs": 22.84,
+        "fat": 0.33
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Bananas, raw",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/173944/nutrients"
+      }
+    },
+    {
+      "id": "apple",
+      "name": "苹果（带皮）",
+      "preparation": "生重，可食部分，带皮",
+      "aliases": [
+        "苹果"
+      ],
+      "nutrients": {
+        "kcal": 52.0,
+        "protein": 0.26,
+        "carbs": 13.81,
+        "fat": 0.17
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Apples, raw, with skin (Includes foods for USDA's Food Distribution Program)",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/171688/nutrients"
+      }
+    },
+    {
+      "id": "chicken-roasted",
+      "name": "烤鸡胸肉（去皮）",
+      "preparation": "熟重，烤制，去皮，不另加油",
+      "aliases": [
+        "鸡胸肉"
+      ],
+      "nutrients": {
+        "kcal": 165.0,
+        "protein": 31.02,
+        "carbs": 0.0,
+        "fat": 3.57
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Chicken, broilers or fryers, breast, meat only, cooked, roasted",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/171477/nutrients"
+      }
+    },
+    {
+      "id": "egg-boiled",
+      "name": "水煮鸡蛋",
+      "preparation": "熟重，可食部分，水煮",
+      "aliases": [
+        "鸡蛋"
+      ],
+      "nutrients": {
+        "kcal": 155.0,
+        "protein": 12.58,
+        "carbs": 1.12,
+        "fat": 10.61
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Egg, whole, cooked, hard-boiled",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/173424/nutrients"
+      }
+    },
+    {
+      "id": "olive-oil",
+      "name": "橄榄油",
+      "preparation": "食用油，按实际用量",
+      "aliases": [
+        "油"
+      ],
+      "nutrients": {
+        "kcal": 884.0,
+        "protein": 0.0,
+        "carbs": 0.0,
+        "fat": 100.0
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Oil, olive, salad or cooking",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/171413/nutrients"
+      }
+    },
+    {
+      "id": "broccoli-boiled",
+      "name": "水煮西兰花",
+      "preparation": "熟重，水煮沥干，无油无盐",
+      "aliases": [
+        "西兰花"
+      ],
+      "nutrients": {
+        "kcal": 35.0,
+        "protein": 2.38,
+        "carbs": 7.18,
+        "fat": 0.41
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Broccoli, cooked, boiled, drained, without salt",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/169967/nutrients"
+      }
+    }
+  ]
+}

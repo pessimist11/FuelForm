@@ -1,0 +1,14 @@
+{
+  "startDate": "2026-10-12",
+  "weeks": 2,
+  "trainingDays": 3,
+  "durationMinutes": 40,
+  "equipment": [
+    "bodyweight"
+  ],
+  "experience": "beginner",
+  "goal": "规律训练",
+  "avoidExerciseIds": [
+    "pushup"
+  ]
+}

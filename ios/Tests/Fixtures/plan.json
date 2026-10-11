@@ -1,0 +1,250 @@
+{
+  "mode": "mock",
+  "draft": {
+    "name": "演示训练草稿",
+    "days": [
+      {
+        "dayKey": "2026-10-12",
+        "rest": false,
+        "exercises": [
+          {
+            "exerciseId": "squat",
+            "name": "徒手深蹲",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "bridge",
+            "name": "臀桥",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "deadbug",
+            "name": "死虫式",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          }
+        ]
+      },
+      {
+        "dayKey": "2026-10-13",
+        "rest": true,
+        "exercises": []
+      },
+      {
+        "dayKey": "2026-10-14",
+        "rest": false,
+        "exercises": [
+          {
+            "exerciseId": "squat",
+            "name": "徒手深蹲",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "bridge",
+            "name": "臀桥",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "deadbug",
+            "name": "死虫式",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          }
+        ]
+      },
+      {
+        "dayKey": "2026-10-15",
+        "rest": true,
+        "exercises": []
+      },
+      {
+        "dayKey": "2026-10-16",
+        "rest": false,
+        "exercises": [
+          {
+            "exerciseId": "squat",
+            "name": "徒手深蹲",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "bridge",
+            "name": "臀桥",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "deadbug",
+            "name": "死虫式",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          }
+        ]
+      },
+      {
+        "dayKey": "2026-10-17",
+        "rest": true,
+        "exercises": []
+      },
+      {
+        "dayKey": "2026-10-18",
+        "rest": true,
+        "exercises": []
+      },
+      {
+        "dayKey": "2026-10-19",
+        "rest": false,
+        "exercises": [
+          {
+            "exerciseId": "squat",
+            "name": "徒手深蹲",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "bridge",
+            "name": "臀桥",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "deadbug",
+            "name": "死虫式",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          }
+        ]
+      },
+      {
+        "dayKey": "2026-10-20",
+        "rest": true,
+        "exercises": []
+      },
+      {
+        "dayKey": "2026-10-21",
+        "rest": false,
+        "exercises": [
+          {
+            "exerciseId": "squat",
+            "name": "徒手深蹲",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "bridge",
+            "name": "臀桥",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "deadbug",
+            "name": "死虫式",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          }
+        ]
+      },
+      {
+        "dayKey": "2026-10-22",
+        "rest": true,
+        "exercises": []
+      },
+      {
+        "dayKey": "2026-10-23",
+        "rest": false,
+        "exercises": [
+          {
+            "exerciseId": "squat",
+            "name": "徒手深蹲",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "bridge",
+            "name": "臀桥",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          },
+          {
+            "exerciseId": "deadbug",
+            "name": "死虫式",
+            "sets": 2,
+            "minReps": 8,
+            "maxReps": 12,
+            "targetKg": null,
+            "restSeconds": 90
+          }
+        ]
+      },
+      {
+        "dayKey": "2026-10-24",
+        "rest": true,
+        "exercises": []
+      },
+      {
+        "dayKey": "2026-10-25",
+        "rest": true,
+        "exercises": []
+      }
+    ],
+    "notes": "固定规则演示，目标信息未用于个性化处方。确认并调整动作后才启用。"
+  },
+  "warnings": [
+    "演示计划：固定规则，不是个性化 AI 结果"
+  ]
+}

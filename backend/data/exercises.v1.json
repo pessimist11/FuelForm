@@ -1,0 +1,12 @@
+[
+  {"id":"squat","name":"徒手深蹲","equipment":"bodyweight","cue":"在舒适范围内下蹲，膝盖方向与脚尖一致"},
+  {"id":"pushup","name":"俯卧撑","equipment":"bodyweight","cue":"保持躯干稳定，可改为跪姿或上斜版本"},
+  {"id":"bridge","name":"臀桥","equipment":"bodyweight","cue":"缓慢抬髋，避免过度反弓腰背"},
+  {"id":"deadbug","name":"死虫式","equipment":"bodyweight","cue":"每侧记录次数，保持腰背稳定"},
+  {"id":"db-row","name":"哑铃划船","equipment":"dumbbell","cue":"在稳定支撑下缓慢拉起"},
+  {"id":"db-press","name":"哑铃推举","equipment":"dumbbell","cue":"使用能控制的重量，无痛范围内抬举"},
+  {"id":"goblet-squat","name":"高脚杯深蹲","equipment":"dumbbell","cue":"哑铃贴近胸前，控制下蹲"},
+  {"id":"bb-row","name":"杠铃划船","equipment":"barbell","cue":"保持稳定躯干，先练习轻重量"},
+  {"id":"leg-press","name":"腿举","equipment":"machine","cue":"调整座椅，在舒适范围内屈伸"},
+  {"id":"pulldown","name":"高位下拉","equipment":"machine","cue":"避免借惯性拉动，控制回程"}
+]

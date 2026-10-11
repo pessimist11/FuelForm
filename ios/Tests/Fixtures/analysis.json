@@ -1,0 +1,64 @@
+{
+  "originalDraft": {
+    "isFood": true,
+    "items": [
+      {
+        "name": "熟白米饭",
+        "foodId": "rice-cooked",
+        "servedGrams": 150.0,
+        "preparation": "熟重，水煮，无额外油",
+        "estimatedNutrients": {
+          "kcal": 195.0,
+          "protein": 4.0,
+          "carbs": 42.0,
+          "fat": 0.4
+        },
+        "assumptions": [
+          "演示供餐重量 150 g"
+        ],
+        "questions": [
+          "实际份量多少？",
+          "是否额外加油或酱料？",
+          "是否有剩余？"
+        ]
+      }
+    ],
+    "message": "演示分析：这里是固定的米饭示例，不是图片识别结果。"
+  },
+  "mode": "mock",
+  "isFood": true,
+  "items": [
+    {
+      "name": "熟白米饭",
+      "servedGrams": 150.0,
+      "preparation": "熟重，水煮，无额外油",
+      "basis": "per100",
+      "nutrients": {
+        "kcal": 130.0,
+        "protein": 2.69,
+        "carbs": 28.17,
+        "fat": 0.28
+      },
+      "source": {
+        "kind": "database",
+        "label": "USDA SR Legacy · Rice, white, long-grain, regular, enriched, cooked",
+        "version": "2018-04",
+        "reference": "https://fdc.nal.usda.gov/food-details/168878/nutrients"
+      },
+      "assumptions": [
+        "演示供餐重量 150 g"
+      ],
+      "questions": [
+        "实际份量多少？",
+        "是否额外加油或酱料？",
+        "是否有剩余？",
+        "请核对数据库条目与实物及烹饪方式是否一致"
+      ]
+    }
+  ],
+  "message": "演示分析：这里是固定的米饭示例，不是图片识别结果。",
+  "warnings": [
+    "演示分析：固定示例，与图片内容无关"
+  ],
+  "catalogVersion": "fuelform-foods-1.0.0"
+}
