@@ -94,3 +94,28 @@ xcodebuild -project ios/FuelForm.xcodeproj -scheme FuelForm -configuration Relea
 Device Hub的坐标点击持续报noWindowsAvailable，部分AX字段/Stepper在值变化后需要完整刷新，模拟器粘贴有异步剪贴板问题。改用界面可访问性按钮、直接键入数字/ASCII标记和系统返回快捷键完成以上流程；没有换用未授权的UI控制方式。首页入口让实际首次使用步骤也更直接。本次不把底部标签栏触摸、照片、删除、负数、大字号/深色/VoiceOver或全流程称为已通过。
 
 当前devicectl设备列表只检测到iPhone 18 Pro模拟器（hardwareProperties.reality=simulated，transportType=sameMachine），未检测到真机。工程未配置个人Team；真机连接、账户与签名、照片/权限/网络及真实AI仍待完成。代码修复和验收文档将正常提交并推送现有main；推送结果以Git远端核验为准。
+
+## 2026-10-12 追加：真机签名与安装
+
+- 后续连接 iPhone 15 Pro（iOS 26.7.1），用户开启开发者模式、登录 Xcode 并解锁设备；明确授权向个人开发 Team 注册设备、签名并安装。
+- 工程本地配置真实个人 Team，Bundle ID 为 `com.pessimist11.FuelForm`。真机 Debug 签名构建成功；签名校验通过，开发描述文件包含当前设备，有效期至 2026-10-19。个人签名配置在后续第一轮升级提交中一并保存；证书、描述文件及私钥不纳入版本库。
+- `devicectl device install app` 返回 success，FuelForm 已安装。模拟器 QA 数据未迁入手机。
+- 首次启动被 iOS 安全检查拒绝。用户在手机上完成开发者信任后，再次 `devicectl device process launch` 返回 success；随后仅查询 FuelForm 进程，确认进程仍在运行。真机安装和启动已验证，尚未完成真机界面及业务全流程验收。
+- 本机证据：`/private/tmp/FuelForm-device-build-registered.log`、`/private/tmp/FuelForm-install-result.json`、`/private/tmp/FuelForm-launch-result.json`、`/private/tmp/FuelForm-running-process.json`。真实 AI、照片与权限、网络及锁屏 Keychain 等真机验收仍待完成。
+
+
+## 2026-10-12 追加：第一轮体验升级
+
+本轮范围为今日页、记餐流程、固定确认区域与资料页键盘问题。保持现有SwiftData schema和领域计算，不进行数据重置；个人签名与Bundle ID保持现有配置。
+
+- 今日页改为热量概览、早餐/午餐/晚餐/加餐卡片与今日训练。重点展示已记录摄入、剩余额度；未知值、超过目标、估算盈余仍有明确文案。计算解释按需展开。
+- 新餐次提供拍照/相册、搜索食物、快速输入热量入口。名称、供餐重量、整份热量、食用比例直接在主页面编辑；营养来源及原始分析移入详情。
+- 底部固定本餐合计、存草稿和确认按钮；有未保存修改时提醒保留或放弃，成功保存才清理未被引用的临时照片。照片加载和分析任务校验request ID，取消后的过期结果不能写入新编辑状态。
+- 最大辅助字号下修正日期裁切和固定操作区过高问题；概览和数值行可转为纵向，日期控件与固定操作区限至可用的紧凑字号。
+- 工作区BUG记录指出资料页键盘无法收起。资料、体重和服务字段接入FocusState；增加键盘“收起键盘”、滚动收起和导航栏保存入口。保存资料时结束输入；单日快照编辑页也补上键盘收起。
+
+实际验证：最终22项XCTest、0失败；Debug/Release模拟器、真机Debug签名构建均成功。模拟器经界面验证草稿400不计入→确认400→修改600；1800/2200快照下余额1200、缺口1600；改2400后超额600、盈余200；实际停止/重启仍保留；删除后无记录显示未知。熟米饭200g吃75%显示150g/195kcal。关闭时放弃修改不会覆盖已保存值。合成资料180/75保存后重新打开保留，之后还原为空。后端未启动，以上手动流程可执行。浅深色及最大辅助字号检查已完成重点页面，软件键盘完整触摸/VoiceOver/小屏仍待，不能称全UI通过。
+
+用户重新连接并解锁iPhone后，使用同一个Bundle ID覆盖安装升级版，安装返回success；启动返回success，随后FuelForm进程仍在运行。没有卸载App，没有改动手机个人记录，也没有把模拟器合成数据搬入手机。真机数据界面、拍照、权限、网络与真实AI的完整验收仍待。
+
+证据位于本机临时目录：`/private/tmp/FuelForm-upgrade-final-tests.log`及同名xcresult、`/private/tmp/FuelForm-upgrade-final-release.log`、`/private/tmp/FuelForm-upgrade-final-device.log`、`/private/tmp/FuelForm-upgrade-install.json`、`/private/tmp/FuelForm-upgrade-launch.json`、`/private/tmp/FuelForm-upgrade-processes.json`。本轮代码、工程配置与验收文档纳入第一轮体验升级提交。用户的BUG记录文件保留，待手机触摸复核；推送结果以Git远端核验为准。

@@ -9,7 +9,16 @@ extension Double { var kcalText: String { formatted(.number.precision(.fractionL
 @MainActor struct OptionalNumber: View {
     var title: String
     @Binding var value: Double?
-    var body: some View { HStack { Text(title); TextField("未填写", value: $value, format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing).accessibilityLabel(title) } }
+    var focus: FocusState<Bool>.Binding? = nil
+    var body: some View {
+        HStack {
+            Text(title)
+            if let focus { field.focused(focus) } else { field }
+        }
+    }
+    private var field: some View {
+        TextField("未填写", value: $value, format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing).accessibilityLabel(title)
+    }
 }
 @MainActor struct NumberRow: View {
     var title: String
@@ -48,27 +57,66 @@ extension View { func fuelError(_ error: Binding<String?>) -> some View { modifi
         }.padding(.vertical, 4)
     }
 }
+extension MealKind {
+    var symbol: String {
+        switch self {
+        case .breakfast: return "sunrise"
+        case .lunch: return "sun.max"
+        case .dinner: return "moon.stars"
+        case .snack: return "carrot"
+        }
+    }
+}
+extension View {
+    func fuelCard() -> some View {
+        padding(18).background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22))
+    }
+}
 @MainActor struct SummaryView: View {
     var summary: DaySummary
     var snapshot: DaySnapshot?
+    @State private var showEstimate = false
+    private var known: Bool { summary.hasRecords || snapshot?.complete == true }
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 18) {
             Text(summary.status).font(.caption).foregroundStyle(.secondary)
-            HStack(alignment: .firstTextBaseline) {
-                Text(summary.hasRecords || snapshot?.complete == true ? summary.intake.kcalText : "—").font(.system(.largeTitle, design: .rounded, weight: .bold)).monospacedDigit()
-                Text("kcal 已记录摄入").font(.subheadline).foregroundStyle(.secondary)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 24) { intake; remaining }
+                VStack(alignment: .leading, spacing: 16) { intake; remaining }
             }
             if let target = snapshot?.intakeTarget {
-                ProgressView(value: min(summary.intake, target), total: max(1, target)).tint(.teal).accessibilityLabel("摄入目标进度")
-                Text("摄入目标 \(target.kcalText) kcal").font(.caption).foregroundStyle(.secondary)
-            } else { Text("摄入目标未设置").font(.caption).foregroundStyle(.secondary) }
-            HStack(alignment: .top, spacing: 20) {
-                metric(summary.remaining.map { $0 < 0 ? "超过摄入目标" : "剩余饮食额度" } ?? "剩余饮食额度", summary.remaining)
-                metric(summary.deficit.map { $0 < 0 ? "估算热量盈余" : "估算热量缺口" } ?? "估算热量缺口", summary.deficit)
+                VStack(alignment: .leading, spacing: 6) {
+                    if known { ProgressView(value: min(summary.intake, target), total: max(1, target)).tint(summary.intake > target ? .orange : .teal).accessibilityLabel("摄入目标进度") }
+                    Text("每日目标 \(target.kcalText) kcal").font(.subheadline).foregroundStyle(.secondary)
+                }
+            } else { Text("设置目标后，查看今天的剩余额度").font(.subheadline).foregroundStyle(.secondary) }
+            Divider()
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 20) { expenditure; deficit }
+                VStack(alignment: .leading, spacing: 12) { expenditure; deficit }
             }
-            Notice(text: "消耗估算 \(snapshot?.expenditure.map { $0.kcalText + " kcal" } ?? "未设置")；计划训练不计入消耗。未记全的日期仅显示已记录摄入与估算值。")
-        }.padding(.vertical, 6)
+            DisclosureGroup("这些数字怎么算？", isExpanded: $showEstimate) {
+                Text("剩余额度 = 摄入目标 − 已记录摄入。估算缺口 = 估算总消耗 − 已记录摄入。消耗由你设置，计划训练不会额外计入。未记全时仅表示截至目前的记录。")
+                    .font(.footnote).foregroundStyle(.secondary).padding(.top, 6)
+            }.font(.caption)
+        }
     }
+    private var intake: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("已记录摄入").font(.subheadline).foregroundStyle(.secondary)
+            Text(known ? summary.intake.kcalText : "—").font(.system(.largeTitle, design: .rounded, weight: .bold)).monospacedDigit()
+            Text("kcal").font(.caption).foregroundStyle(.secondary)
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+    private var remaining: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text((summary.remaining ?? 0) < 0 ? "超过摄入目标" : "剩余饮食额度").font(.subheadline).foregroundStyle(.secondary)
+            Text(summary.remaining.map { abs($0).kcalText } ?? "—").font(.system(.largeTitle, design: .rounded, weight: .semibold)).monospacedDigit().foregroundStyle((summary.remaining ?? 0) < 0 ? Color.orange : Color.teal)
+            Text("kcal").font(.caption).foregroundStyle(.secondary)
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+    private var expenditure: some View { metric("估算总消耗", snapshot?.expenditure) }
+    private var deficit: some View { metric((summary.deficit ?? 0) < 0 ? "估算热量盈余" : "估算热量缺口", summary.deficit) }
     private func metric(_ label: String, _ value: Double?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(.caption).foregroundStyle(.secondary)

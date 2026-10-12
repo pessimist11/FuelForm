@@ -4,6 +4,7 @@ import Charts
 @MainActor struct ProfileView: View {
     @Environment(AppStore.self) private var store
     @AppStorage("serviceURL") private var serviceURL = "http://localhost:8000"
+    @FocusState private var inputFocused: Bool
     @State private var profile = Profile()
     @State private var token = ""
     @State private var applyToday = true
@@ -17,22 +18,22 @@ import Charts
     var body: some View {
         Form {
             Section("个人资料（可留空）") {
-                OptionalNumber(title: "身高 cm", value: $profile.heightCM)
-                OptionalNumber(title: "当前体重 kg", value: $profile.weightKG)
-                HStack { Text("年龄"); TextField("未填写", value: $profile.age, format: .number).keyboardType(.numberPad).multilineTextAlignment(.trailing) }
+                OptionalNumber(title: "身高 cm", value: $profile.heightCM, focus: $inputFocused)
+                OptionalNumber(title: "当前体重 kg", value: $profile.weightKG, focus: $inputFocused)
+                HStack { Text("年龄"); TextField("未填写", value: $profile.age, format: .number).keyboardType(.numberPad).multilineTextAlignment(.trailing).focused($inputFocused) }
                 Picker("生理性别", selection: $profile.sex) { ForEach(["未填写", "女性", "男性", "其他 / 不便填写"], id: \.self) { Text($0) } }
                 Picker("活动水平", selection: $profile.activity) { ForEach(["未填写", "久坐", "轻度活动", "中度活动", "高度活动"], id: \.self) { Text($0) } }
             }
             Section("热量目标与消耗估算") {
-                OptionalNumber(title: "摄入目标 kcal", value: $profile.intakeTarget)
-                OptionalNumber(title: "每日估算总消耗 kcal", value: $profile.expenditure)
+                OptionalNumber(title: "摄入目标 kcal", value: $profile.intakeTarget, focus: $inputFocused)
+                OptionalNumber(title: "每日估算总消耗 kcal", value: $profile.expenditure, focus: $inputFocused)
                 Notice(text: "第一版采用你手动设置的总消耗，未填写时不生成个性化缺口。此值应已包含日常活动，App 不另加计划训练消耗。")
                 Toggle("同时明确更新今日快照", isOn: $applyToday)
-                Button("保存资料与设置") { do { try store.saveProfile(profile, applyToday: applyToday); message = "资料已保存；过去日期的目标快照未修改" } catch { self.error = error.localizedDescription } }
+                Button("保存资料与设置") { saveProfile() }
             }
             Section("体重记录") {
                 DatePicker("称重日期", selection: $weightDate, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
-                OptionalNumber(title: "体重 kg", value: $weight)
+                OptionalNumber(title: "体重 kg", value: $weight, focus: $inputFocused)
                 Button("添加体重记录") {
                     guard let weight, weight.isFinite, (1...500).contains(weight) else { error = "请填写有效体重（1–500 kg）"; return }
                     do { try store.change { $0.weights.append(WeightEntry(date: weightDate, kg: weight)) }; self.weight = nil; message = "体重记录已保存" } catch { self.error = error.localizedDescription }
@@ -59,8 +60,8 @@ import Charts
                 Notice(text: "空缺日期表示摄入未知；柱高只代表已确认记录，并不自动代表全天记全。")
             }
             Section("分析服务") {
-                TextField("服务地址", text: $serviceURL).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                SecureField("服务访问凭据（非模型 API Key）", text: $token).textInputAutocapitalization(.never).autocorrectionDisabled()
+                TextField("服务地址", text: $serviceURL).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL).focused($inputFocused)
+                SecureField("服务访问凭据（非模型 API Key）", text: $token).textInputAutocapitalization(.never).autocorrectionDisabled().focused($inputFocused)
                 Button("将凭据保存到 Keychain") { do { try ServiceKeychain.save(token); message = "服务访问凭据已保存到 Keychain" } catch { self.error = error.localizedDescription } }
                 Button(serviceBusy ? "检查中…" : "检查后端连接与模式") { checkService() }.disabled(serviceBusy)
                 Notice(text: "模型 API Key 只填写到后端 .env。模拟器 localhost 指向 Mac；真机指向手机自身。开发时使用同一网络下 Mac 的 .local 主机名，正式构建使用 HTTPS。")
@@ -73,9 +74,19 @@ import Charts
             if let message { Section { Notice(text: message, symbol: "checkmark.circle") } }
             Section { Text("FuelForm 1.0 · 个人本地记录\n没有自动注入的演示餐次。演示餐次单独分区，不计入个人统计；手动核对并转为个人草稿后才能计入。").font(.footnote).foregroundStyle(.secondary) }
         }.navigationTitle("我的")
+            .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) { Button("保存") { saveProfile() }.accessibilityLabel("保存资料与目标") }
+                ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("收起键盘") { inputFocused = false } }
+            }
             .onAppear { profile = store.state.profile; do { token = try ServiceKeychain.read() } catch { self.error = error.localizedDescription } }
             .onDisappear { statusTask?.cancel() }
             .fuelError($error)
+    }
+    private func saveProfile() {
+        inputFocused = false
+        do { try store.saveProfile(profile, applyToday: applyToday); message = "资料已保存；过去日期的目标快照未修改" }
+        catch { self.error = error.localizedDescription }
     }
     private func checkService() {
         serviceBusy = true
