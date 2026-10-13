@@ -3,7 +3,7 @@ import base64
 import json
 from datetime import timedelta
 from typing import Protocol, TypeVar
-from openai import AsyncOpenAI, APIError, APITimeoutError
+from openai import AsyncOpenAI, APIError, APITimeoutError, AuthenticationError, PermissionDeniedError, RateLimitError, NotFoundError, BadRequestError
 from pydantic import ValidationError
 from .config import Settings
 from .schemas import Recognition, Candidate, Nutrients, PlanRequest, PlanDraft, PlanDay, PlannedExercise
@@ -38,28 +38,43 @@ class MockProvider:
         return PlanDraft(name='演示训练草稿', days=days, notes='固定规则演示，目标信息未用于个性化处方。确认并调整动作后才启用。')
 
 T = TypeVar('T', Recognition, PlanDraft)
-class OpenAIProvider:
-    def __init__(self, settings: Settings):
-        if not settings.openai_api_key.get_secret_value() or not settings.openai_model.strip():
-            raise ProviderError('configuration_missing', '真实 AI 模式需要后端 OPENAI_API_KEY 和 OPENAI_MODEL', 503)
-        self.model = settings.openai_model
+class ResponsesProvider:
+    def __init__(self, settings: Settings, photo: bool = False):
+        issues = settings.configuration_issues(photo)
+        if issues:
+            raise ProviderError('configuration_missing', '；'.join(issues), 503)
+        key, self.model, base_url = settings.ai_configuration(photo)
         self.timeout = settings.ai_timeout_seconds
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key.get_secret_value(), base_url=settings.openai_base_url,
+        self.max_output_tokens = settings.ai_max_output_tokens
+        self.deepseek = settings.provider == 'deepseek'
+        self.client = AsyncOpenAI(api_key=key.get_secret_value(), base_url=base_url,
                                   timeout=self.timeout, max_retries=0)
 
     async def _parse(self, cls: type[T], instructions: str, content: list[dict]) -> T:
         try:
-            response = await asyncio.wait_for(self.client.responses.parse(model=self.model, store=False,
+            # DeepSeek is stateless; omit unsupported store and disable extra reasoning.
+            options = {'reasoning': {'effort': 'none'}} if self.deepseek else {'store': False}
+            response = await asyncio.wait_for(self.client.responses.parse(model=self.model,
                 instructions=instructions, input=[{'role': 'user', 'content': content}], text_format=cls,
-                max_output_tokens=12000), timeout=self.timeout)
+                max_output_tokens=self.max_output_tokens, **options), timeout=self.timeout)
             if response.status != 'completed' or response.output_parsed is None:
                 raise ProviderError('invalid_ai_output', 'AI 拒绝、输出未完成或结构无效，请修改输入后重试')
             return cls.model_validate(response.output_parsed.model_dump())
         except (APITimeoutError, asyncio.TimeoutError):
             raise ProviderError('ai_timeout', 'AI 请求超时，可手动记录或稍后重试', 504) from None
+        except AuthenticationError:
+            raise ProviderError('provider_auth_failed', '模型 API Key 无效，请在后端检查凭据', 502) from None
+        except PermissionDeniedError:
+            raise ProviderError('provider_access_denied', '模型服务拒绝访问，请检查模型权限与账户状态', 502) from None
+        except RateLimitError:
+            raise ProviderError('provider_rate_limited', '模型服务额度不足或请求受限，请检查余额与限额后重试', 503) from None
+        except NotFoundError:
+            raise ProviderError('provider_model_unavailable', '模型或接口不可用，请检查后端模型名称和服务地址', 502) from None
+        except BadRequestError:
+            raise ProviderError('provider_request_rejected', '模型不接受当前输入或结构化格式，请检查模型能力与配置', 502) from None
         except APIError:
-            # Do not expose provider error bodies; they can contain inputs or credential metadata.
-            raise ProviderError('ai_request_failed', 'AI 调用失败，请检查后端模型、凭据及服务可用性') from None
+            # Provider errors can contain credentials and inputs. Never relay their bodies.
+            raise ProviderError('ai_request_failed', '模型调用失败，请稍后重试；可继续手动记录', 502) from None
         except (ValidationError, ValueError):
             raise ProviderError('invalid_ai_output', 'AI 输出未通过校验，请修改输入后重试') from None
 
@@ -80,6 +95,12 @@ class OpenAIProvider:
 
     async def close(self):
         await self.client.close()
+
+class OpenAIProvider(ResponsesProvider):
+    pass
+
+class DeepSeekProvider(ResponsesProvider):
+    pass
 
 def validate_plan(draft: PlanDraft, request: PlanRequest) -> PlanDraft:
     expected = [request.start_date + timedelta(days=i) for i in range(request.weeks * 7)]

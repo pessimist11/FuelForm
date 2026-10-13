@@ -9,8 +9,11 @@
 - 后端：`backend/.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-access-log`。
 - `.env` 的生成：`python3 scripts/bootstrap_backend.py`，不输出凭据，不覆盖已有文件。
 - 环境允许的验证：`./scripts/verify.sh`。`scripts/smoke_backend.py` 对运行中的 Mock 服务做实际 HTTP 验证。
-- XCTest 的持久化测试需完整 Xcode / iOS 模拟器；见 `docs/acceptance.md`。缺少 SDK 时不能声称 App 编译或真机通过。当前已在Xcode27/iOS27完成Debug/Release构建和22项XCTest，已验收模拟器手动记餐/目标/训练、App重启、重点页面浅深色/大字号；iPhone已签名安装启动，照片/AI及完整真机业务仍待。
+- XCTest 的持久化测试需完整 Xcode / iOS 模拟器；见 `docs/acceptance.md`。缺少 SDK 时不能声称 App 编译或真机通过。当前已在Xcode27/iOS27完成Debug/Release构建和24项XCTest，已验收模拟器手动记餐/目标/训练、App重启、重点页面浅深色/大字号；iPhone已签名安装启动，DeepSeek已通过两次合成条件真实调用，真实餐食质量及完整手机AI流程仍待。
 - 模拟器使用SDK条件化的私有Keychain entitlement；真机沿用真实Team，不禁用签名来跑Keychain验收。Keychain测试必须用隔离账号，不能覆盖用户token。
+
+- AI供应商支持显式mock/openai/deepseek；Key仅后端。DeepSeek照片使用已核实的deepseek-flash，训练与照片模型可分开；不能将文字模型当识图模型。
+- `backend/.venv/bin/python scripts/check_ai.py`只检查配置；`--models`读取模型列表；`--live`至多两次真实生成，会使用API额度。状态就绪不等于真实调用成功。
 
 ## 界面维护
 

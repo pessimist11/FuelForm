@@ -13,6 +13,8 @@ import Charts
     @State private var exportURL: URL?
     @State private var error: String?
     @State private var message: String?
+    @State private var credentialMessage: String?
+    @State private var serviceStatus: APIClient.Status?
     @State private var serviceBusy = false
     @State private var statusTask: Task<Void, Never>?
     var body: some View {
@@ -62,9 +64,12 @@ import Charts
             Section("分析服务") {
                 TextField("服务地址", text: $serviceURL).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL).focused($inputFocused)
                 SecureField("服务访问凭据（非模型 API Key）", text: $token).textInputAutocapitalization(.never).autocorrectionDisabled().focused($inputFocused)
-                Button("将凭据保存到 Keychain") { do { try ServiceKeychain.save(token); message = "服务访问凭据已保存到 Keychain" } catch { self.error = error.localizedDescription } }
+                    .onChange(of: token) { _, _ in credentialMessage = nil }
+                Button("将凭据保存到 Keychain") { saveServiceCredential() }
+                if let credentialMessage { Notice(text: credentialMessage, symbol: "checkmark.circle") }
                 Button(serviceBusy ? "检查中…" : "检查后端连接与模式") { checkService() }.disabled(serviceBusy)
-                Notice(text: "模型 API Key 只填写到后端 .env。模拟器 localhost 指向 Mac；真机指向手机自身。开发时使用同一网络下 Mac 的 .local 主机名，正式构建使用 HTTPS。")
+                if let serviceStatus { Notice(text: serviceStatus.description, symbol: serviceStatus.configurationIssues?.isEmpty == false ? "exclamationmark.circle" : "network") }
+                Notice(text: "模型 API Key 只填写到后端 .env。模拟器 localhost 指向 Mac；真机指向手机自身。开发时填写同一网络下 Mac 的 .local 主机名或局域网 IPv4 地址；主机名连不上时可尝试 IP。正式构建使用 HTTPS。")
             }
             Section("记录导出") {
                 Notice(text: "导出格式版本 1，包含资料、体重、目标、餐次、草稿和训练日志。包含照片相对路径，但不包含照片文件；不是完整备份，暂不支持恢复。")
@@ -88,11 +93,19 @@ import Charts
         do { try store.saveProfile(profile, applyToday: applyToday); message = "资料已保存；过去日期的目标快照未修改" }
         catch { self.error = error.localizedDescription }
     }
+    private func saveServiceCredential() {
+        inputFocused = false
+        credentialMessage = nil
+        do {
+            try ServiceKeychain.save(token)
+            credentialMessage = token.isEmpty ? "已清除保存在 Keychain 中的服务凭据" : "服务访问凭据已保存到 Keychain"
+        } catch { self.error = error.localizedDescription }
+    }
     private func checkService() {
-        serviceBusy = true
+        inputFocused = false; serviceStatus = nil; serviceBusy = true
         statusTask = Task { @MainActor in
             defer { serviceBusy = false }
-            do { let status = try await APIClient(address: serviceURL, token: token).status(); try Task.checkCancellation(); message = "连接成功 · \(status.mode == "mock" ? "演示分析模式（Mock）" : "真实 AI 模式（凭据及模型调用尚需通过实际分析验证）") · \(status.catalogVersion)" }
+            do { let status = try await APIClient(address: serviceURL, token: token).status(); try Task.checkCancellation(); serviceStatus = status }
             catch is CancellationError {} catch { self.error = error.localizedDescription }
         }
     }

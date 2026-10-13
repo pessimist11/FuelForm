@@ -22,7 +22,8 @@
         try api.testBackendPhotoContractCalculatesActualIntake()
         try api.testBackendPlanContractProducesInactiveSnapshot()
         try api.testMalformedResponseAndDatesFailClientValidation()
-        print("PASS: 19 FuelForm core business rule checks (Foundation, no iOS runtime)")
+        try api.testDeepSeekDraftsKeepRealModeAndRejectUnknownProviders()
+        print("PASS: 20 FuelForm core business rule checks (Foundation, no iOS runtime)")
     }
 }
 #endif

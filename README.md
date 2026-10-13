@@ -2,7 +2,7 @@
 
 个人 iPhone 饮食与训练记录 App，Swift / SwiftUI / SwiftData，最低 iOS 17。四个入口：今日、饮食、训练、我的。个人历史只存手机，后端只做食物分析与计划草稿。
 
-**当前状态：第一轮体验升级已完成。今日页展示热量概览、四类餐次与训练入口；记餐提供拍照/相册、食物搜索、快速热量三种入口，食物份量可直接编辑，底部固定合计与确认按钮。已通过22项原生XCTest、Debug/Release模拟器构建、真机签名构建，并更新安装和启动于iPhone 15 Pro。模拟器已验证草稿、确认、修改、删除、实际App重启及浅深色/最大辅助字号的重点页面。资料页补上收起键盘和顶部保存入口。真实AI、拍照权限及完整真机业务流程仍待验收。** 详见 [进度与证据](docs/progress.md) 和 [验收清单](docs/acceptance.md)。
+**当前状态：第一轮体验升级已完成。今日页展示热量概览、四类餐次与训练入口；记餐提供拍照/相册、食物搜索、快速热量三种入口，食物份量可直接编辑，底部固定合计与确认按钮。已通过22项原生XCTest、Debug/Release模拟器构建、真机签名构建，并更新安装和启动于iPhone 15 Pro。模拟器已验证草稿、确认、修改、删除、实际App重启及浅深色/最大辅助字号的重点页面。资料页补上收起键盘和顶部保存入口。DeepSeek接入已通过49项后端测试、24项原生XCTest及一次真实训练草稿/一次合成非食物图片调用；真实餐食效果、照片权限和手机到后端的完整流程仍待验收。** 详见 [进度与证据](docs/progress.md) 和 [验收清单](docs/acceptance.md)。
 
 ## 当前版本
 
@@ -37,6 +37,44 @@ backend/.venv/bin/python scripts/smoke_backend.py
 
 ## 真实 AI
 
+已支持 DeepSeek 和 OpenAI；真实供应商不自动回退 Mock。模型 Key 仅在后端，iPhone保存的仍是 SERVICE_TOKEN。
+
+### DeepSeek（当前选择）
+
+在 `backend/.env` 配置并重启服务：
+
+```dotenv
+PROVIDER=deepseek
+DEEPSEEK_API_KEY=<自己的DeepSeek API Key>
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_VISION_MODEL=
+AI_TIMEOUT_SECONDS=45
+AI_MAX_OUTPUT_TOKENS=12000
+```
+
+`deepseek-flash` 是本轮按 [DeepSeek官方图片说明](https://api-docs.deepseek.com/guides/vision/) 核实的图片输入示例。[官方Responses说明](https://api-docs.deepseek.com/guides/responses_api/)确认结构化 `text.format`、图片输入与SDK格式兼容。本项目使用 `responses.parse`，Pydantic和程序再次校验日期、动作、份量和营养值；禁用SDK自动重试。DeepSeek请求使用 `reasoning.effort=none`，不发送不受支持的 `store`；接口为无状态，但不能据此承诺供应商零保留。
+
+需要分别选训练与照片模型时，填写 `DEEPSEEK_VISION_MODEL=deepseek-flash`。当前仅将官方已核实的Flash名称及其兼容别名用于照片；文字模型不会被当作可识图模型。模型名称仍可配置；未知新模型需要重新核实图片能力。
+
+`.env`以点开头，是隐藏文件：Finder中进入项目的backend文件夹，按 **⌘ + Shift + .** 显示。真实 `.env`被Git忽略，不会推送到GitHub；不要将Key放进 `.env.example`或聊天。当前本机已填写DeepSeek Key并读取官方账户模型列表，`deepseek-flash`可用；一次一周训练草稿和一次合成非食物图片请求已实际通过。Key不会进入版本库。
+
+配置检查及可选联调：
+
+```sh
+backend/.venv/bin/python scripts/check_ai.py
+# 读取账户模型列表，不生成内容：
+backend/.venv/bin/python scripts/check_ai.py --models
+# 明确进行至多两次真实生成，会消耗API额度：
+backend/.venv/bin/python scripts/check_ai.py --live
+```
+
+默认命令只检查本机配置，不发送照片或调用模型。`--live`使用一周通用训练条件和合成纯色非食物图片，校验结构与错误处理，不上传个人身体数据或历史；通过也不代表真实餐食估算准确。诊断脚本不输出凭据、图片、完整响应或上游错误内容。
+
+DeepSeek客户端更新已签名安装并启动于iPhone 15 Pro。用户已确认服务凭据保存成功，并通过Mac局域网IP显示“后端已连接 · DeepSeek”。后端连接成功、配置齐全、账户可用和真实生成是不同的验证阶段。本轮已验证当前Key及两次实际生成；真实餐食估算与个性化计划质量、手机端照片分析完整流程仍待验证。
+
+### OpenAI（可选）
+
 在后端 `.env` 设置并重启服务：
 
 ```dotenv
@@ -48,7 +86,7 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 AI_TIMEOUT_SECONDS=45
 ```
 
-模型可替换为API账户可访问、支持图片输入和结构化输出的模型。此示例的能力已查阅[官方能力页](https://developers.openai.com/api/docs/models/gpt-4.1-mini)；不保证账户可用性或实际效果。适配器使用官方 Responses API/Pydantic结构化输出，`store=False`，SDK自动重试0。当前没有配置真实Key，也没有做付费调用。配置缺失/超时/失败明确报错，不会回退Mock。更多官方引用及隐私边界见 [架构](docs/architecture.md)。
+模型可替换为API账户可访问、支持图片输入和结构化输出的模型。此示例的能力已查阅[官方能力页](https://developers.openai.com/api/docs/models/gpt-4.1-mini)；不保证账户可用性或实际效果。适配器使用官方 Responses API/Pydantic结构化输出，`store=False`，SDK自动重试0。OpenAI目前没有配置真实Key，也没有做付费调用。配置缺失/超时/失败明确报错，不会回退Mock。更多官方引用及隐私边界见 [架构](docs/architecture.md)。
 
 ## iOS 工程与模拟器
 
@@ -90,7 +128,9 @@ backend/.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 0.0.0.
 scutil --get LocalHostName
 ```
 
-将命令实际返回的主机名拼为 `http://<主机名>.local:8000`，填入App；不要照抄示例主机名。允许macOS防火墙入站和iPhone本地网络访问。Debug只放开本地网络ATS，并在客户端限制localhost/127.0.0.1/.local；HTTP局域网请求未加密，仅用于可信本地开发。Release完全使用HTTPS和系统信任证书。没有对整个App放开任意HTTP。
+将命令实际返回的主机名拼为 `http://<主机名>.local:8000`，填入App；不要照抄示例主机名。若手机 Safari 能打开 `http://<Mac局域网IP>:8000/health`，却打不开主机名地址，可直接在新版开发 App 中填写该 IPv4 地址（不带 `/health`）。Wi-Fi 的 IPv4 通常可用 `ipconfig getifaddr en0` 获取；换网络后需重新检查地址和后端监听接口。`/health` 无需凭据，仅用于检查连通性。
+
+允许macOS防火墙入站和iPhone本地网络访问。Debug仅允许localhost/127.0.0.1/.local以及私有IPv4范围10/8、172.16/12、192.168/16，ATS配置包含对应的精确回环地址和私网CIDR例外；依据[Apple的IP例外说明](https://developer.apple.com/documentation/BundleResources/Information-Property-List/NSAppTransportSecurity/NSExceptionDomains)。HTTP局域网请求未加密，仅用于可信本地开发。Release完全使用HTTPS和系统信任证书。没有对整个App放开任意HTTP。
 
 设备安装、相机、真实HEIC/方向、本地网络权限、锁屏重启数据、动态文字/深色/VoiceOver以及文件分享都需真机清单逐项验证。删除App会删除本地记录，当前JSON不含照片且不能恢复，升级测试前另行保留App容器。
 

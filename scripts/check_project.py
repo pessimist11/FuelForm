@@ -32,7 +32,13 @@ for config in ('Debug','Release'):
  data=plistlib.loads((root/f'ios/FuelForm/Info-{config}.plist').read_bytes())
  assert 'NSCameraUsageDescription' in data and 'NSLocalNetworkUsageDescription' in data
  ats=data.get('NSAppTransportSecurity',{});assert not ats.get('NSAllowsArbitraryLoads')
- if config=='Release': assert not ats.get('NSAllowsLocalNetworking')
+ if config=='Release': assert not ats
+ else:
+  assert ats.get('NSAllowsLocalNetworking')
+  assert ats.get('NSExceptionDomains') == {
+   address: {'NSExceptionAllowsInsecureHTTPLoads':True}
+   for address in ['127.0.0.1','10.0.0.0/8','172.16.0.0/12','192.168.0.0/16']
+  }
 ET.parse(root/'ios/FuelForm.xcodeproj/xcshareddata/xcschemes/FuelForm.xcscheme')
 backend=json.loads((root/'backend/data/foods.v1.json').read_text());ios=json.loads((root/'ios/FuelForm/Resources/foods.v1.json').read_text());assert ios==backend
 subprocess.run(['swiftc','-frontend','-parse',*[str(p) for p in (root/'ios/FuelForm').rglob('*.swift')]],check=True)

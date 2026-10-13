@@ -57,7 +57,7 @@ class SuggestedFood(Model):
 
 class Analysis(Model):
     original_draft: Recognition
-    mode: Literal['mock', 'openai']
+    mode: Literal['mock', 'openai', 'deepseek']
     is_food: bool
     items: list[SuggestedFood]
     message: str
@@ -106,6 +106,6 @@ class PlanDraft(Model):
     notes: str = Field(max_length=2000)
 
 class PlanResponse(Model):
-    mode: Literal['mock', 'openai']
+    mode: Literal['mock', 'openai', 'deepseek']
     draft: PlanDraft
     warnings: list[str]

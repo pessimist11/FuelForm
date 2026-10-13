@@ -119,3 +119,38 @@ Device Hub的坐标点击持续报noWindowsAvailable，部分AX字段/Stepper在
 用户重新连接并解锁iPhone后，使用同一个Bundle ID覆盖安装升级版，安装返回success；启动返回success，随后FuelForm进程仍在运行。没有卸载App，没有改动手机个人记录，也没有把模拟器合成数据搬入手机。真机数据界面、拍照、权限、网络与真实AI的完整验收仍待。
 
 证据位于本机临时目录：`/private/tmp/FuelForm-upgrade-final-tests.log`及同名xcresult、`/private/tmp/FuelForm-upgrade-final-release.log`、`/private/tmp/FuelForm-upgrade-final-device.log`、`/private/tmp/FuelForm-upgrade-install.json`、`/private/tmp/FuelForm-upgrade-launch.json`、`/private/tmp/FuelForm-upgrade-processes.json`。本轮代码、工程配置与验收文档纳入第一轮体验升级提交。用户的BUG记录文件保留，待手机触摸复核；推送结果以Git远端核验为准。
+
+
+## 2026-10-13 追加：DeepSeek后端与真实API接入
+
+用户选择DeepSeek。本轮实际读取官方Vision、Responses兼容说明和Models接口文档，核实 `deepseek-flash` 的图片输入与结构化响应能力。添加独立供应商配置、可分开的训练/照片模型；不沿用OpenAI Key，不把文字模型当作可识图模型。统一Responses适配器维持Pydantic校验、超时、输出上限和SDK重试0。DeepSeek关闭额外思考，不发送其不支持的store参数。
+
+- 后端契约与iOS契约允许明确的 `deepseek` 模式。餐次仍需确认，训练仍保存为未启用草稿；演示隔离和历史快照规则保留。
+- 状态接口在认证后报告供应商、模型、照片/训练配置就绪与缺项；App在服务配置区显示这些信息。就绪不等于已验证真实调用。
+- 上游认证、访问拒绝、额度/限流、模型/接口不可用、输入拒绝、超时和异常结构返回具体安全文案；不转发上游正文，不自动切Mock。
+- 新增 `scripts/check_ai.py`：默认只检查本机配置，`--models`读取账户模型列表，`--live`至多两次真实生成，只使用合成纯色非食物图片和通用一周训练条件，不输出Key或完整响应。
+- 用户询问 `.env`位置，已核验 `/Users/saki/FuelForm/backend/.env`存在且被Git忽略。Finder默认隐藏点文件，⌘+Shift+.可显示。本机已选择DeepSeek，原SERVICE_TOKEN保留，Key只由用户在本机填写；示例配置和bootstrap不包含真实凭据。
+
+实际验证：49项后端pytest通过（含实际SDK序列化/解析的MockTransport测试，不能把它称为真实AI）；20项Foundation检查通过；23项原生XCTest、0失败；Release模拟器与真机Debug签名构建成功。未填Key阶段实际运行localhost HTTP：状态正确显示DeepSeek缺Key，计划返回503配置错误，无演示回退。
+
+用户随后填写Key，检查时两个模型都为准确名称 `deepseek-flash`。官方 `/models`请求通过，账户列表包含配置模型；随后实际执行 `scripts/check_ai.py --live`，一周7天训练草稿经日期/动作/器械/时长校验通过，合成非食物图片结构化请求通过且没有食物项目。总共两次真实生成，无自动重试。没有上传个人照片、身体资料或历史，没有把草稿写入手机或启用计划。重启本机后端后，实际HTTP状态返回DeepSeek、photoReady/planReady均true；该状态仍仅证明配置就绪。
+
+本机证据：`/private/tmp/FuelForm-deepseek-tests-20261013.log`及同名xcresult、`/private/tmp/FuelForm-deepseek-release-20261013.log`、`/private/tmp/FuelForm-deepseek-device-20261013.log`、`/private/tmp/FuelForm-deepseek-core-20261013.log`。真实模型检查与调用结果记录在本轮工具输出，未保存完整模型响应。用户重新连接并解锁iPhone后，升级包签名校验通过，覆盖安装与启动均返回success，随后进程仍在运行。Mac后端仅绑定当前局域网接口并保持SERVICE_TOKEN认证，Mac .local地址的实际HTTP认证检查通过；已请用户在同Wi-Fi手机中自行填写服务地址和SERVICE_TOKEN并检查连接。手机网络/照片与实际餐食质量尚待验收，不能称完整手机AI流程已完成。
+
+## 2026-10-13 追加：手机局域网连接排查
+
+用户反馈无法连接服务、保存凭据似乎无反应。检查确认后端进程与监听正常；Mac通过主机名和IP的认证请求均返回200。用户在iPhone Safari实测 `/health`：IP返回ok，`.local`打不开。当前证据指向主机名解析路径受限，不能据此认定校园网完全隔离设备，也不能将网络错误归因于Keychain。
+
+- Debug增加私有IPv4直连（10/8、172.16/12、192.168/16），客户端与ATS范围保持一致；Release仍只接受HTTPS。按当前Apple文档给iOS17+配置CIDR例外，未放开全局HTTP。
+- 保存凭据时收起键盘，并将成功/清除提示放到按钮下方；原来位于页面底部的反馈容易被忽略。原生隔离账号Keychain读写、更新和删除测试通过，没有覆盖用户令牌。
+- URLSession等待首次本地网络授权，区分域名解析失败、主机连接失败和其他网络错误；没有更改校园网、系统DNS或防火墙设置。
+- 24项原生XCTest、0失败，Release模拟器及真机Debug构建、真机签名核验通过。模拟器通过真实界面输入私网IP和无效合成凭据，收到后端“服务访问凭据无效”，验证请求已穿过客户端地址校验、ATS和网络到达认证层；没有存储该测试凭据或调用模型。
+- 用户重新连接后，同Bundle ID覆盖安装及启动均success，随后进程仍在运行；已请用户将手机服务地址改为当前Mac IPv4并重新保存凭据、检查状态。手机App认证连接及实际照片链路仍待用户验证。
+
+证据：`/private/tmp/FuelForm-ip-tests-20261013.log`及同名xcresult、`/private/tmp/FuelForm-ip-device-20261013.log`、`/private/tmp/FuelForm-ip-release-20261013.log`、`/private/tmp/FuelForm-ip-install-20261013.json`、`/private/tmp/FuelForm-ip-launch-20261013.json`。没有新增真实模型调用。
+
+用户随后在iPhone明确反馈“凭据已保存，后端已连接 · DeepSeek”。据此确认手机端保存提示及通过局域网IP的后端认证连接已通过用户实测；实际餐食照片分析、编辑确认和重启后照片/记录保留仍待验证。此反馈不代表新的模型生成或餐食估算质量验收。
+
+真机升级证据：`/private/tmp/FuelForm-deepseek-install-20261013.json`、`/private/tmp/FuelForm-deepseek-launch-20261013.json`、`/private/tmp/FuelForm-deepseek-process-20261013.json`。没有卸载或重置手机数据，服务凭据由用户自行在手机保存。
+
+用户要求推送本轮修改。推送前再次运行 `./scripts/verify.sh`：项目结构检查、49项后端测试及20项Foundation检查通过；核对最终24项原生XCTest和Debug真机/Release模拟器构建成功记录。确认真实 `.env`被忽略，待提交文件未包含本机配置的密钥或服务令牌。此次发布范围为DeepSeek接入、局域网IP连接修复、状态/凭据反馈、测试和文档，不包含云端部署。

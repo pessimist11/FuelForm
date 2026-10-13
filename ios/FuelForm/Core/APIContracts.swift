@@ -38,7 +38,7 @@ public struct AnalysisResponse: Codable, Sendable {
     public var warnings: [String]
     public var catalogVersion: String
     public func validatedItems() throws -> [FoodItem] {
-        guard ["mock", "openai"].contains(mode), isFood == !items.isEmpty, items.count <= 30 else { throw DomainError.invalid("分析响应不合理") }
+        guard ["mock", "openai", "deepseek"].contains(mode), isFood == !items.isEmpty, items.count <= 30 else { throw DomainError.invalid("分析响应不合理") }
         return try items.map { try $0.item() }
     }
 }
@@ -70,7 +70,7 @@ public struct AIPlanResponse: Codable, Sendable {
         public var maxReps: Int; public var targetKg: Double?; public var restSeconds: Int
     }
     public func plan(exercises: [ExerciseDefinition], request: AIPlanRequest) throws -> TrainingPlan {
-        guard ["mock", "openai"].contains(mode), draft.days.count == request.weeks * 7 else { throw DomainError.invalid("AI 计划长度无效") }
+        guard ["mock", "openai", "deepseek"].contains(mode), draft.days.count == request.weeks * 7 else { throw DomainError.invalid("AI 计划长度无效") }
         var p = TrainingPlan(); p.name = draft.name; p.demo = mode == "mock"; p.notes = draft.notes + "\n" + warnings.joined(separator: "\n")
         p.days = try draft.days.enumerated().map { offset, input in
             guard input.dayKey == DayKey.adding(offset, to: request.startDate) else { throw DomainError.invalid("AI 计划日期无效") }

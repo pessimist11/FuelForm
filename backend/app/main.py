@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from .config import Settings
 from .schemas import PlanRequest, PlanResponse, Analysis
-from .providers import ProviderError, MockProvider, OpenAIProvider, validate_plan
+from .providers import ProviderError, MockProvider, OpenAIProvider, DeepSeekProvider, ResponsesProvider, validate_plan
 from .images import normalize_image
 from .catalog import CATALOG, EXERCISES, match
 
@@ -64,8 +64,11 @@ def create_app(settings: Settings | None = None, provider_override=None):
             raise ProviderError('rate_limited', '分析请求过于频繁，请稍后重试', 429)
         calls.append(now)
 
-    def provider():
-        return provider_override or (MockProvider() if settings.provider == 'mock' else OpenAIProvider(settings))
+    def provider(photo=False):
+        if provider_override is not None: return provider_override
+        if settings.provider == 'mock': return MockProvider()
+        cls = DeepSeekProvider if settings.provider == 'deepseek' else OpenAIProvider
+        return cls(settings, photo=photo)
 
     @app.get('/health')
     async def health(): return {'status': 'ok'}
@@ -73,7 +76,14 @@ def create_app(settings: Settings | None = None, provider_override=None):
     protected = [Depends(auth)]
     ai_deps = [Depends(auth), Depends(rate_limit)]
     @app.get('/v1/status', dependencies=protected)
-    async def status(): return {'mode': settings.provider, 'catalogVersion': CATALOG['version']}
+    async def status():
+        photo_issues = settings.configuration_issues(photo=True)
+        plan_issues = settings.configuration_issues()
+        return {'mode': settings.provider, 'catalogVersion': CATALOG['version'],
+                'photoReady': not photo_issues, 'planReady': not plan_issues,
+                'photoModel': settings.ai_configuration(photo=True)[1] if settings.provider != 'mock' else None,
+                'planModel': settings.ai_configuration()[1] if settings.provider != 'mock' else None,
+                'configurationIssues': list(dict.fromkeys(photo_issues + plan_issues))}
     @app.get('/v1/foods', dependencies=protected)
     async def foods(): return CATALOG
     @app.get('/v1/exercises', dependencies=protected)
@@ -88,12 +98,12 @@ def create_app(settings: Settings | None = None, provider_override=None):
         if len(data) > settings.max_image_bytes:
             raise ProviderError('image_too_large', '照片超过大小限制', 413)
         jpeg = await asyncio.to_thread(normalize_image, data)
-        engine = provider()
+        engine = provider(photo=True)
         try:
             raw = await engine.recognize(jpeg)
             return match(raw, settings.provider)
         finally:
-            if isinstance(engine, OpenAIProvider): await engine.close()
+            if isinstance(engine, ResponsesProvider): await engine.close()
 
     @app.post('/v1/plans/draft', response_model=PlanResponse, dependencies=ai_deps)
     async def plan(request: PlanRequest):
@@ -104,7 +114,7 @@ def create_app(settings: Settings | None = None, provider_override=None):
         except ValidationError:
             raise ProviderError('invalid_ai_output', '计划结构校验失败', 422) from None
         finally:
-            if isinstance(engine, OpenAIProvider): await engine.close()
+            if isinstance(engine, ResponsesProvider): await engine.close()
     return app
 
 app = create_app()

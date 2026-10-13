@@ -41,4 +41,20 @@ final class APIContractTests: XCTestCase {
         plan.draft.days[0].dayKey = "2026-10-13"
         XCTAssertThrowsError(try plan.plan(exercises: [], request: request))
     }
+    func testDeepSeekDraftsKeepRealModeAndRejectUnknownProviders() throws {
+        var response = try JSONDecoder().decode(AnalysisResponse.self, from: fixture("analysis"))
+        response.mode = "deepseek"
+        XCTAssertEqual(try response.validatedItems().first?.consumed.kcal, 195)
+        response.mode = "unknown-provider"
+        XCTAssertThrowsError(try response.validatedItems())
+        var plan = try JSONDecoder().decode(AIPlanResponse.self, from: fixture("plan"))
+        plan.mode = "deepseek"
+        let request = try JSONDecoder().decode(AIPlanRequest.self, from: fixture("plan-request"))
+        let definitions = [ExerciseDefinition(id: "squat", name: "徒手深蹲", equipment: "bodyweight", cue: ""), ExerciseDefinition(id: "bridge", name: "臀桥", equipment: "bodyweight", cue: ""), ExerciseDefinition(id: "deadbug", name: "死虫式", equipment: "bodyweight", cue: "")]
+        let draft = try plan.plan(exercises: definitions, request: request)
+        XCTAssertFalse(draft.demo); XCTAssertFalse(draft.active)
+        plan.mode = "unknown-provider"
+        XCTAssertThrowsError(try plan.plan(exercises: definitions, request: request))
+    }
+
 }

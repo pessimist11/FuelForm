@@ -6,7 +6,7 @@ SwiftUI 四个入口 → AppStore → SwiftData 版本化记录。Foundation 核
 
 URLSession 使用 ephemeral session，不建立持久请求缓存；必要的服务访问令牌放 `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` Keychain。模型 API Key 不进入 iOS。
 
-FastAPI 通过 Provider 协议调用 MockProvider 或 OpenAIProvider。`PROVIDER` 决定模式，不按调用失败自动降级。后端没有个人数据库，原图仅短暂处理，图片归一化后发送模型。多部分上传框架可能在请求期间使用临时文件；请求结束关闭上传文件，不做长期保存。部署时保持一个 worker（当前限流器是单进程）。不记录图片或完整请求。启动命令关闭 access log。
+FastAPI 通过 Provider 协议调用 MockProvider、OpenAIProvider 或 DeepSeekProvider。`PROVIDER` 决定模式，不按调用失败自动降级。后端没有个人数据库，原图仅短暂处理，图片归一化后发送模型。多部分上传框架可能在请求期间使用临时文件；请求结束关闭上传文件，不做长期保存。部署时保持一个 worker（当前限流器是单进程）。不记录图片或完整请求。启动命令关闭 access log。
 
 ## HTTP 契约 v1
 
@@ -39,8 +39,19 @@ FastAPI 通过 Provider 协议调用 MockProvider 或 OpenAIProvider。`PROVIDER
 
 ## 开发网络
 
-Debug Info.plist 只有 `NSAllowsLocalNetworking`，APIClient 只允许 http://localhost、127.0.0.1 或 `.local` 主机。Release 没有 ATS 例外且只接受 HTTPS。没有全局 `NSAllowsArbitraryLoads`。真机不能使用 localhost 连 Mac，使用同 Wi-Fi Mac 的 `.local` 主机名；HTTPS 可使用 IP/域名及系统信任证书。iOS 的本地网络权限拒绝时请求报错，手动功能不受影响。
+Debug Info.plist 使用 `NSAllowsLocalNetworking`，并为127.0.0.1及私有IPv4范围10/8、172.16/12、192.168/16添加ATS例外，APIClient同步限制为localhost、127.0.0.1、`.local`及这些私有IPv4。Release没有ATS例外且只接受HTTPS；没有全局 `NSAllowsArbitraryLoads`。真机不能使用localhost连Mac；同Wi-Fi的 `.local` 主机名无法解析时，可用Mac局域网IPv4直接连接。HTTPS可使用IP/域名及系统信任证书。URLSession等待首次本地网络授权，仍受70秒资源超时约束；错误提示区分主机名解析和主机连接失败，手动功能不受影响。
 
 ## Xcode 27 模拟器签名
 
 原生验证发现无私有身份的模拟器App会返回Keychain -34018。工程仅在iphonesimulator SDK配置 `FuelForm-Simulator.entitlements`，使用 `$(AppIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)` 作为私有身份与唯一访问组；iphoneos不使用该文件，由真实签名Team/Provisioning Profile注入。没有扩大到其他App的Keychain组。采用正常签名后，隔离Keychain测试通过；[Apple访问组与AppID说明](https://developer.apple.com/documentation/Security/sharing-access-to-keychain-items-among-a-collection-of-apps)。
+
+
+## DeepSeek接入（2026-10-13）
+
+按用户选择新增显式 `PROVIDER=deepseek`，独立Key、服务地址、训练与照片模型配置。真实适配器共享Responses请求/解析与错误处理；DeepSeek保留独立供应商身份，客户端和后端契约允许 `deepseek`，不能误判为Mock。原始供应商响应仍保存在用户确认值之外。
+
+本轮实际读取 [DeepSeek Vision](https://api-docs.deepseek.com/guides/vision/)、[Responses兼容说明](https://api-docs.deepseek.com/guides/responses_api/) 和 [Models API](https://api-docs.deepseek.com/api/list-models/)。目前官方文档列出 `deepseek-flash` 支持图片，而Pro为文字输入。使用官方HTTPS端点、内联归一化JPEG和结构化输出。请求关闭额外思考，显式限制输出与超时、SDK重试0；不发送不支持的store参数。文档所述无状态API不等于所有供应商数据处理层都保证零保留。
+
+`/v1/status`认证后返回供应商、照片/训练模型、配置就绪标志及缺项，不返回Key。就绪标志只检查配置，不验证Key、余额、账户权限或实际生成。原字段仍在，新字段可被旧客户端忽略；新客户端兼容旧状态响应。文字模型无法直接用于照片，配置不符时在调用上游之前拒绝。401/403/429/模型不可用/输入拒绝等上游错误转成可操作的安全文案，不透传上游正文。
+
+诊断 `scripts/check_ai.py`默认只检查本机配置；`--models`显式读取账户模型列表；`--live`最多发起一周训练草稿与纯色非食物图片两次生成。没有Key时只能完成替身、实际localhost错误路径和客户端契约验证，不能称为真实AI已接通。

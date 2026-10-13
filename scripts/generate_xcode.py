@@ -79,6 +79,10 @@ def buildref(id,name,product): return f'<BuildableReference BuildableIdentifier=
 info={'CFBundleDevelopmentRegion':'zh-Hans','CFBundleDisplayName':'FuelForm','CFBundleExecutable':'$(EXECUTABLE_NAME)','CFBundleIdentifier':'$(PRODUCT_BUNDLE_IDENTIFIER)','CFBundleInfoDictionaryVersion':'6.0','CFBundleName':'$(PRODUCT_NAME)','CFBundlePackageType':'APPL','CFBundleShortVersionString':'$(MARKETING_VERSION)','CFBundleVersion':'$(CURRENT_PROJECT_VERSION)','LSRequiresIPhoneOS':True,'UILaunchScreen':{},'UIApplicationSceneManifest':{'UIApplicationSupportsMultipleScenes':False},'UISupportedInterfaceOrientations':['UIInterfaceOrientationPortrait'],'NSCameraUsageDescription':'拍摄你主动选择记录的食物，照片保存在本机；点击后端分析时才上传。','NSPhotoLibraryUsageDescription':'仅导入你选中的食物照片到本机记录。','NSLocalNetworkUsageDescription':'连接你配置的本地 FuelForm 分析服务，只有请求分析时才发送照片。'}
 for c in ['Debug','Release']:
     data=dict(info)
-    if c=='Debug': data['NSAppTransportSecurity']={'NSAllowsLocalNetworking':True}
+    if c=='Debug':
+        data['NSAppTransportSecurity']={'NSAllowsLocalNetworking':True, 'NSExceptionDomains': {
+            address: {'NSExceptionAllowsInsecureHTTPLoads':True}
+            for address in ['127.0.0.1','10.0.0.0/8','172.16.0.0/12','192.168.0.0/16']
+        }}
     (root/'FuelForm'/f'Info-{c}.plist').write_bytes(plistlib.dumps(data))
 print('Generated FuelForm.xcodeproj, shared scheme, app + XCTest targets (iOS 17)')
