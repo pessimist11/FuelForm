@@ -79,10 +79,9 @@ import Charts
             if let message { Section { Notice(text: message, symbol: "checkmark.circle") } }
             Section { Text("FuelForm 1.0 · 个人本地记录\n没有自动注入的演示餐次。演示餐次单独分区，不计入个人统计；手动核对并转为个人草稿后才能计入。").font(.footnote).foregroundStyle(.secondary) }
         }.navigationTitle("我的")
-            .scrollDismissesKeyboard(.interactively)
+            .fuelKeyboardDismissal()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) { Button("保存") { saveProfile() }.accessibilityLabel("保存资料与目标") }
-                ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("收起键盘") { inputFocused = false } }
             }
             .onAppear { profile = store.state.profile; do { token = try ServiceKeychain.read() } catch { self.error = error.localizedDescription } }
             .onDisappear { statusTask?.cancel() }

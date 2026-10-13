@@ -154,3 +154,20 @@ Device Hub的坐标点击持续报noWindowsAvailable，部分AX字段/Stepper在
 真机升级证据：`/private/tmp/FuelForm-deepseek-install-20261013.json`、`/private/tmp/FuelForm-deepseek-launch-20261013.json`、`/private/tmp/FuelForm-deepseek-process-20261013.json`。没有卸载或重置手机数据，服务凭据由用户自行在手机保存。
 
 用户要求推送本轮修改。推送前再次运行 `./scripts/verify.sh`：项目结构检查、49项后端测试及20项Foundation检查通过；核对最终24项原生XCTest和Debug真机/Release模拟器构建成功记录。确认真实 `.env`被忽略，待提交文件未包含本机配置的密钥或服务令牌。此次发布范围为DeepSeek接入、局域网IP连接修复、状态/凭据反馈、测试和文档，不包含云端部署。
+
+## 2026-10-13 追加：统一修复输入后键盘无法收起
+
+用户再次报告文字输入后键盘无法收回。检查发现训练计划、AI目标、实际训练、食物详情及搜索缺少统一的收起入口；餐次页旧按钮只清除食物项FocusState，未绑定该焦点的备注仍可能保持编辑。仅让按钮可见或清除局部焦点不足以覆盖所有输入。
+
+- 新增共用 `fuelKeyboardDismissal()`，在输入页面顶部提供键盘向下按钮，同时保留键盘工具栏按钮、滚动收起和提交结束编辑。
+- 通过当前页面附着的UIView定位所属UIWindow并调用系统 `endEditing(true)`，结束当前输入，不依赖某个字段的FocusState，也不遍历或操作其他窗口。
+- 应用于个人资料/服务配置、当天目标、餐次与备注、食物详情/搜索、手动和AI训练计划、动作目标、实际训练组记录与备注。没有全局点击手势，不吞掉列表、按钮或食用比例滑块的点击。
+- 26项原生XCTest、0失败；新增真实UIWindow内数字UITextField及多行UITextView回归，确认结束编辑且原值保留。项目结构/Swift语法检查、Debug真机签名构建、Release模拟器构建通过。
+- 模拟器实际展开资料页数字软件键盘并观察顶部及键盘工具栏收起入口；Device Hub坐标操作仍报noWindowsAvailable，未将按钮可见称为点击通过。
+- 用户连接并解锁后，同Bundle ID签名覆盖安装与启动均success。用户在iPhone复核资料数字输入和记餐备注，明确反馈“可以收起，内容保留”。训练及搜索等其余输入页面使用同一机制，尚未逐字段进行完整真机触摸验收。
+
+证据：`/private/tmp/FuelForm-keyboard-tests-20261013.log`及同名xcresult、`/private/tmp/FuelForm-keyboard-device-20261013.log`、`/private/tmp/FuelForm-keyboard-release-20261013.log`、`/private/tmp/FuelForm-keyboard-install-20261013.json`、`/private/tmp/FuelForm-keyboard-launch-20261013.json`。本轮没有调用真实模型或更改手机记录。
+
+收尾时尝试再次运行完整 `./scripts/verify.sh`，自动审批因额度限制未能完成，动作未执行；没有绕过审批。该限制不影响此前已成功执行的26项原生测试、结构检查、Debug/Release构建与手机复核。
+
+用户随后要求推送键盘修复。推送范围为统一输入控件、各输入页面接入、两项键盘回归测试、Xcode测试文件引用及文档；推送前重新核对已有原生测试/构建成功记录与 `git diff --check`，获取远端后无分歧。本机 `.env`保持忽略，未纳入提交。

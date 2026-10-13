@@ -9,7 +9,7 @@
 - 后端：`backend/.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-access-log`。
 - `.env` 的生成：`python3 scripts/bootstrap_backend.py`，不输出凭据，不覆盖已有文件。
 - 环境允许的验证：`./scripts/verify.sh`。`scripts/smoke_backend.py` 对运行中的 Mock 服务做实际 HTTP 验证。
-- XCTest 的持久化测试需完整 Xcode / iOS 模拟器；见 `docs/acceptance.md`。缺少 SDK 时不能声称 App 编译或真机通过。当前已在Xcode27/iOS27完成Debug/Release构建和24项XCTest，已验收模拟器手动记餐/目标/训练、App重启、重点页面浅深色/大字号；iPhone已签名安装启动，DeepSeek已通过两次合成条件真实调用，真实餐食质量及完整手机AI流程仍待。
+- XCTest 的持久化测试需完整 Xcode / iOS 模拟器；见 `docs/acceptance.md`。缺少 SDK 时不能声称 App 编译或真机通过。当前已在Xcode27/iOS27完成Debug/Release构建和26项XCTest，已验收模拟器手动记餐/目标/训练、App重启、重点页面浅深色/大字号；iPhone已签名安装启动，DeepSeek已通过两次合成条件真实调用，真实餐食质量及完整手机AI流程仍待。
 - 模拟器使用SDK条件化的私有Keychain entitlement；真机沿用真实Team，不禁用签名来跑Keychain验收。Keychain测试必须用隔离账号，不能覆盖用户token。
 
 - AI供应商支持显式mock/openai/deepseek；Key仅后端。DeepSeek照片使用已核实的deepseek-flash，训练与照片模型可分开；不能将文字模型当识图模型。
@@ -19,7 +19,7 @@
 
 - 今日页按热量概览、四类餐次和当天训练组织；记餐入口有拍照/相册、食物搜索和快速热量。
 - 草稿编辑底部固定合计与确认，离开未保存修改需提醒。原始AI数据在详情中保留。
-- 资料/数值页要有键盘收起与可达的保存入口；最大辅助字号重点检查日期、数值行和底部按钮。
+- 所有输入页面接入 `fuelKeyboardDismissal()`，使用页面所属窗口结束编辑，顶部与键盘工具栏均有收起入口；不要仅清除未覆盖所有字段的局部FocusState。资料/数值页保留可达的保存入口；最大辅助字号重点检查日期、数值行和底部按钮。
 
 ## 数据规则
 

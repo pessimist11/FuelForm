@@ -84,10 +84,9 @@ import ImageIO
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if !meal.items.isEmpty || meal.photoPath != nil { confirmationBar.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
             }
-            .scrollDismissesKeyboard(.interactively)
+            .fuelKeyboardDismissal()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("关闭") { if dirty || busy { showDiscard = true } else { dismiss() } } }
-                ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("收起键盘") { focusedFood = nil } }
             }
             .confirmationDialog("保留这次修改？", isPresented: $showDiscard, titleVisibility: .visible) {
                 if canSave { Button(initiallyConfirmed ? "保存修改" : "保存为草稿") { save(confirmed: initiallyConfirmed) } }
@@ -298,6 +297,7 @@ import ImageIO
                 ForEach(item.questions, id: \.self) { Notice(text: $0, symbol: "questionmark.circle") }
             }
         }.navigationTitle("编辑食物")
+            .fuelKeyboardDismissal()
             .onChange(of: item.nutrients) { _, _ in markEdited() }
             .onChange(of: item.name) { _, _ in markEdited() }
             .onChange(of: item.preparation) { _, _ in markEdited() }
@@ -316,6 +316,7 @@ import ImageIO
             List(store.foods.filter { search.isEmpty || $0.name.contains(search) || $0.aliases.contains(where: { $0.contains(search) }) }) { f in
                 Button { choose(f) } label: { VStack(alignment: .leading, spacing: 4) { Text(f.name).font(.headline); Text("\(f.nutrients.kcal.kcalText) kcal / 100 g · \(f.preparation)").font(.caption).foregroundStyle(.secondary) } }.buttonStyle(.plain)
             }.navigationTitle("常用食物").searchable(text: $search, prompt: "搜索食物")
+                .fuelKeyboardDismissal()
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } } }
         }
     }

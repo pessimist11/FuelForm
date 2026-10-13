@@ -71,6 +71,7 @@ import SwiftUI
                 Notice(text: "实际组数可与计划不同。跳过动作会保留原目标和已填写的组记录。训练不自动换算为热量。")
             }
         }.navigationTitle("实际训练")
+            .fuelKeyboardDismissal()
             .sheet(isPresented: $showReplace) { ExercisePicker { e in if let index = log.exercises.firstIndex(where: { $0.id == replaceID }) { log.exercises[index].actualName = e.name; log.exercises[index].actualExerciseID = e.id }; showReplace = false } }
             .onChange(of: log) { _, _ in persist() }
             .fuelError($error)

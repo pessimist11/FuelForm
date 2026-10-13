@@ -1,4 +1,46 @@
 import SwiftUI
+import UIKit
+
+@MainActor final class KeyboardDismissalController: ObservableObject {
+    weak var anchor: UIView?
+    func dismiss() { anchor?.window?.endEditing(true) }
+}
+
+private struct KeyboardDismissalAnchor: UIViewRepresentable {
+    let controller: KeyboardDismissalController
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        controller.anchor = view
+        return view
+    }
+    func updateUIView(_ uiView: UIView, context: Context) { controller.anchor = uiView }
+}
+
+private struct KeyboardDismissalModifier: ViewModifier {
+    @StateObject private var controller = KeyboardDismissalController()
+    func body(content: Content) -> some View {
+        content
+            .background(KeyboardDismissalAnchor(controller: controller).allowsHitTesting(false))
+            .scrollDismissesKeyboard(.interactively)
+            .onSubmit { controller.dismiss() }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("收起键盘", systemImage: "keyboard.chevron.compact.down") { controller.dismiss() }
+                        .labelStyle(.iconOnly)
+                        .accessibilityIdentifier("dismissKeyboard")
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("收起键盘") { controller.dismiss() }
+                }
+            }
+    }
+}
+
+extension View {
+    func fuelKeyboardDismissal() -> some View { modifier(KeyboardDismissalModifier()) }
+}
 
 extension Double { var kcalText: String { formatted(.number.precision(.fractionLength(0))) } }
 @MainActor struct Notice: View {

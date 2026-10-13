@@ -39,6 +39,7 @@ import SwiftUI
                     if let status { Notice(text: status) }
                 }
             }.navigationTitle("AI 计划草稿")
+                .fuelKeyboardDismissal()
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } } }
                 .sheet(item: $generated) { PlanEditor(initial: $0) }
                 .fuelError($error)

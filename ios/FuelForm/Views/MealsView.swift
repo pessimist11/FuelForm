@@ -69,9 +69,8 @@ import SwiftUI
                 Notice(text: "这是对该日期快照的明确修改，不会改动其他日期。补录日期首次创建快照时采用当前设置，请核对当日实际使用的目标。")
             }.navigationTitle("当天快照")
                 .onAppear { if let day = store.state.days.first(where: { $0.dayKey == dayKey }) { target = day.intakeTarget; expenditure = day.expenditure } else { target = store.state.profile.intakeTarget; expenditure = store.state.profile.expenditure } }
-                .scrollDismissesKeyboard(.interactively)
+                .fuelKeyboardDismissal()
                 .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("收起键盘") { inputFocused = false } }
                     ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                     ToolbarItem(placement: .confirmationAction) { Button("保存") {
                         inputFocused = false

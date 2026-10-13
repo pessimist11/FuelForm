@@ -82,6 +82,7 @@ import SwiftUI
                     Button("确认并启用计划") { save(active: true) }.font(.headline).disabled(plan.demo)
                 }
             }.navigationTitle("编辑训练计划")
+                .fuelKeyboardDismissal()
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } } }
                 .sheet(isPresented: $copySheet) {
                     NavigationStack { Form {
@@ -109,6 +110,7 @@ import SwiftUI
                 }
             } else { Notice(text: "休息日不会产生未完成任务。") }
         }.navigationTitle("日期安排")
+            .fuelKeyboardDismissal()
             .sheet(isPresented: $picker) { ExercisePicker { e in var value = PlannedExercise(); value.exerciseID = e.id; value.name = e.name; day.exercises.append(value); picker = false } }
     }
 }
@@ -124,6 +126,7 @@ import SwiftUI
             Stepper("组间休息 \(exercise.restSeconds) 秒", value: $exercise.restSeconds, in: 15...600, step: 15)
             Notice(text: "这些是计划目标。实际重量、次数和完成状态在执行时单独记录。")
         }.navigationTitle("动作目标")
+            .fuelKeyboardDismissal()
     }
 }
 @MainActor struct ExercisePicker: View {
