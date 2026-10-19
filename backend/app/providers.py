@@ -10,8 +10,9 @@ from .schemas import Recognition, Candidate, Nutrients, PlanRequest, PlanDraft, 
 from .catalog import FOODS, EXERCISES, EXERCISE_MAP
 
 class ProviderError(Exception):
-    def __init__(self, code: str, message: str, status: int = 502):
+    def __init__(self, code: str, message: str, status: int = 502, headers: dict[str, str] | None = None):
         self.code = code; self.message = message; self.status = status
+        self.headers = headers
 
 class Provider(Protocol):
     async def recognize(self, jpeg: bytes) -> Recognition: ...

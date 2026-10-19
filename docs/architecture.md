@@ -10,12 +10,12 @@ FastAPI 通过 Provider 协议调用 MockProvider、OpenAIProvider 或 DeepSeekP
 
 ## HTTP 契约 v1
 
-除 `/health` 外需要 `Authorization: Bearer <SERVICE_TOKEN>`。所有字段使用 camelCase，来源包含 kind/label/version/reference。
+除 `/health` 外的v1接口需要 `Authorization: Bearer <SERVICE_TOKEN>`。认证在读取上传内容和解析请求体之前完成。所有字段使用 camelCase，来源包含 kind/label/version/reference。
 
 | 方法/路径 | 请求 | 响应/目的 |
 | --- | --- | --- |
 | GET /health | 无 | 最小存活状态，不证明 AI 可用 |
-| GET /v1/status | 认证 | mode、catalogVersion，不暴露 Key |
+| GET /v1/status | 认证 | mode、catalogVersion、模型配置就绪与limits，不暴露 Key |
 | GET /v1/foods | 认证 | 带版本及来源的食物库 |
 | GET /v1/exercises | 认证 | 动作库 |
 | POST /v1/analyze | multipart，字段 image | mode、isFood、可编辑 items、questions、assumptions、warnings |
@@ -28,6 +28,8 @@ FastAPI 通过 Provider 协议调用 MockProvider、OpenAIProvider 或 DeepSeekP
 计划：连续日期、每天结构、每周训练天数、动作库、器械、避开动作、组数、次数、重量与休息时间校验；粗略用每次3秒+组间休息+热身5分钟检查是否能放进请求时长。这只是草稿校验，**不是运动热量估算**。
 
 错误分开报告 unauthorized、configuration_missing、invalid_image、image_too_large、ai_timeout、ai_request_failed、invalid_ai_output、invalid_plan、rate_limited。请求默认45秒AI超时；客户端65秒单请求、70秒资源超时；SDK重试为0。UI有取消及手动重试，没有无限重试。
+
+2026-10-19增加RequestGuard与BackendRuntime：单worker内共享照片/计划准入，默认2个并发、20次/分钟，忙时503且不排队，429/503带Retry-After。总上传时限15秒，图片请求按原大小加256KiB multipart开销，其他写入最多64KiB；同时检查声明和实际字节。只记录服务生成请求ID、固定路由、状态及耗时。Validation错误不回显输入，未预期异常返回安全500。模型客户端按照片/计划角色延迟创建并复用，在lifespan结束时释放；不保存或缓存照片/分析结果。详细语义和限制见[运行说明](backend-operations.md)。
 
 ## 真实适配器官方核实（2026-10-11）
 

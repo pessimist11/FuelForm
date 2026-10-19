@@ -14,6 +14,8 @@
 
 - AI供应商支持显式mock/openai/deepseek；Key仅后端。DeepSeek照片使用已核实的deepseek-flash，训练与照片模型可分开；不能将文字模型当识图模型。
 - `backend/.venv/bin/python scripts/check_ai.py`只检查配置；`--models`读取模型列表；`--live`至多两次真实生成，会使用API额度。状态就绪不等于真实调用成功。
+- `scripts/check_backend.py --url <服务地址>`只做health/status认证诊断，不调用模型、不跟随重定向。`smoke_backend.py --no-write-fixtures`可保留契约样本。
+- 后端RequestGuard先认证、再限制上传与AI准入；BackendRuntime在单worker内控制并发/滚动限流，按角色复用模型客户端并于lifespan关闭。禁止每个请求结束就关闭共享连接。日志仅记录生成的请求ID、固定路由、状态和耗时；配置/请求错误不得回显敏感输入。运行说明见 `docs/backend-operations.md`。
 
 ## 界面维护
 

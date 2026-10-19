@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 ROOT = Path(__file__).resolve().parents[1]
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=ROOT / '.env', extra='ignore')
+    model_config = SettingsConfigDict(env_file=ROOT / '.env', extra='ignore', hide_input_in_errors=True)
     provider: Literal['mock', 'openai', 'deepseek'] = 'mock'
     service_token: SecretStr = SecretStr('')
     openai_api_key: SecretStr = SecretStr('')
@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = Field(default=45, ge=1, le=120)
     max_image_bytes: int = Field(default=8 * 1024 * 1024, ge=1024, le=20 * 1024 * 1024)
     requests_per_minute: int = Field(default=20, ge=1, le=120)
+    ai_max_concurrent_requests: int = Field(default=2, ge=1, le=8)
+    request_body_timeout_seconds: float = Field(default=15, ge=1, le=60)
 
     @field_validator('openai_base_url', 'deepseek_base_url')
     @classmethod
